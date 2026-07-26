@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typometric</title>
+
+    <!-- 1. Alle CSS-Stylesheets -->
+    <link rel="stylesheet" href="assets/css/vendor/splitting.css" />
+    <link rel="stylesheet" href="assets/css/fonts.css" />
+    <link rel="stylesheet" href="assets/css/style.css" data-pagedjs-ignore />
+    <link rel="stylesheet" href="assets/css/page.css" />
+
+    <!-- Für deine dynamischen Formel-Effekte im CSS -->
+    <style id="dynamic-effects" data-pagedjs-ignore></style>
+
+    <!-- 2. JS-Bibliotheken (Reihenfolge ist extrem wichtig!) -->
+    <!-- Zuerst Splitting und Opentype -->
+    <script src="assets/js/vendor/splitting.min.js"></script>
+    <script src="assets/js/vendor/opentype.min.js"></script>
+
+    <!-- Paged.js Config blockiert das automatische Rendern beim Laden -->
+    <script>
+        window.PagedConfig = { auto: false };
+    </script>
+    
+    <!-- Erst jetzt das Paged.js-Skript selbst laden -->
+    <script src="assets/js/vendor/paged.polyfill.js"></script>
+    
+</head>
+
+<body>
+    <div id="left-side">
+        <div id="left-side-ui">
+            <div id="text-editor">
+                <div class="sidebar">
+                    <div>
+                        <button class="sidebar-button" id="btn-new-page">
+                        <p>New Page</p>
+                        </button>
+                    </div>
+                    <div>
+                        <button id="btn-export-pdf-1" class="sidebar-button">
+                            <p>Export PDF</p>
+                        </button>        
+                    </div>
+                </div>
+                <div id=text-editor-textarea>
+                    <textarea id="editor" autocomplete="off" placeholder="Write your text here..." value=""></textarea>
+                </div>
+            </div>
+            <div id="styles" class="panel hidden">
+                <div class="sidebar">
+                    <div>
+                    </div>
+                    <div>
+                        <button id="btn-export-pdf-2" class="sidebar-button">
+                            <p>Export PDF</p>
+                        </button>        
+                    </div>
+                </div>
+                <div id=styles-settings class="panel-settings">
+                    <div>
+                        <!-- Im left-side / effects Container -->
+                        <div id="effects">
+                            <h1>Typography</h1>   
+                            <!-- Schriftarten Dropdown (Werte angepasst für JS-Lookup) -->
+                            <div>
+                                <p>Font</p>
+                                <div class="simple-dropdown">
+                                <select id="font-select">
+
+                                </select>
+                                </div>
+                            </div>
+                            <div>
+                                <p>Font size</p>
+                                <div class="formula-input-dropwdown">
+                                <input type="text" id="font-size-input" 
+                                       value="(sin(var(--char-index) * 6deg) + 2) * 8pt">
+                                <select id="font-size-select" class="formula-select"></select>
+                                </div>
+                            </div>
+                            <div>
+                                <p>Line height</p>
+                                <div class="formula-input">
+                                <input type="text" id="line-height-input" 
+                                value="1.0">
+                                </div>
+                            </div>
+                            <div>
+                                <p>Letter spacing</p>
+                                <div class="formula-input">
+                                <input type="text" id="letter-spacing-input" 
+                                value="0pt">
+                                </div>
+                            </div>
+                            <div id="variable-settings" class="hidden">
+                            <h1 style="margin-top: 15px">Variable Typography</h1>
+                                <div id="axes-container"></div>
+                            </div>
+                            <h1 style="margin-top: 15px">Paragraph</h1>
+                            <div>
+                                <p>Alignment</p>
+                                <div class="radio-input">
+                                <label class="btn-display">Left
+                                <input class="btn-control" type="radio" id="alignment-left" name="alignment" value="left" checked>
+                                </label>
+                                <label class="btn-display">Right
+                                <input class="btn-control" type="radio" id="alignment-right" name="alignment" value="right">
+                                </label>
+                                <label class="btn-display">Center
+                                <input class="btn-control" type="radio" id="alignment-center" name="alignment" value="center">
+                                </label>
+                                <label class="btn-display">Justify
+                                <input class="btn-control" type="radio" id="alignment-justify" name="alignment" value="justify">
+                                </label>
+                                </div>
+                            </div>
+                            <div>
+                                <p>Margin left</p>
+                                <div class="formula-input">
+                                <input type="text" id="margin-left-input" 
+                                value="0mm">
+                                </div>
+                            </div>
+                            <div>
+                                <p>Margin right</p>
+                                <div class="formula-input">
+                                <input type="text" id="margin-right-input" 
+                                value="0mm">
+                                </div>
+                            </div>
+                            <h1 style="margin-top: 15px">Transform</h1>
+                            <div>
+                                <p>Translate X</p>
+                                <div>
+                                <input type="text" id="translate-x-input">
+                                </div>
+                            </div>
+                            <div>
+                                <p>Translate Y</p>
+                                <div>
+                                <input type="text" id="translate-y-input"> 
+                                </div>
+                            </div>
+                        </div>                                   
+                    </div>
+                </div>
+            </div>
+            <div id="pages" class="panel hidden">
+                <div class="sidebar">
+                    <div>
+                    </div>
+                    <div>
+                        <button id="btn-export-pdf-3" class="sidebar-button">
+                            <p>Export PDF</p>
+                        </button>        
+                    </div>
+                </div>
+                <div id="pages-settings" class="panel-settings">
+                    <h1>Page Size</h1>
+                    <div>
+                        <p>Presets</p>
+                        <div class="simple-dropdown">
+                        <select id="page-preset-select" class="page-preset-select"></select>
+                        </div>
+                    </div>
+                    <div>
+                        <p>Height</p>
+                        <div class="formula-input">
+                        <input type="text" id="page-height-input" value="210mm">
+                        </div>
+                    </div>
+                    <div>
+                        <p>Width</p>
+                        <div class="formula-input">
+                        <input type="text" id="page-width-input" value="148mm">
+                        </div>
+                    </div>
+                    <h1>Margins</h1>
+                    <div>
+                        <p>Margin top</p>
+                        <div class="formula-input">
+                        <input type="text" id="page-margin-top-input" value="20mm">
+                        </div>
+                    </div>
+                    <div>
+                        <p>Margin bottom<p>
+                        <div class="formula-input">
+                        <input type="text" id="page-margin-bottom-input" value="20mm">
+                        </div>
+                    </div>
+                    <div>
+                        <p>Margin left<p>
+                        <div class="formula-input">
+                        <input type="text" id="page-margin-left-input" value="20mm">
+                        </div>
+                    </div>
+                    <div>
+                        <p>Margin right<p>
+                        <div class="formula-input">
+                        <input type="text" id="page-margin-right-input" value="20mm">                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="settings" class="hidden">
+            </div>
+            <nav class="navigation">
+                <button id="btn-tab-editor" class="tab-button active"><p>Editor</p></button>
+                <button id="btn-tab-styles" class="tab-button"><p>Styles</p></button>
+                <button id="btn-tab-pages" class="tab-button"><p>Pages & Print</p></button>
+                <!--<button id="btn-tab-settings" class="tab-button"><p>Settings</p></button>--->
+            </nav>
+        </div>
+    </div>
+    <div id="right-side">
+        <div id="book-canvas"></div>
+    </div>
+    <div id="status-bar">
+        <div>
+            <h1>Typometric</h1>
+        </div>
+        <div>
+            <button id="demo"><p>Press me!</p></button>
+        </div>
+        <div id="zoom-control">
+            <input type="text" value="100%" id="zoom-input">                            
+        </div>
+    </div>
+
+    <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>

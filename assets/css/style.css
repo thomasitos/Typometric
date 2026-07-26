@@ -1,0 +1,399 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  display: grid !important;
+  /* Zwei gleich große Spalten */
+  grid-template-columns: 50vw 50vw !important; 
+  
+  /* NEU: Erste Zeile nimmt den Rest, die zweite Zeile ist exakt 30px hoch für die Leiste */
+  grid-template-rows: calc(100vh - 60px) 60px !important; 
+  
+  width: 100vw !important;
+  height: 100vh !important;
+  overflow: hidden !important; 
+
+  font-family: "Inter";
+  font-size: 14px;
+
+  background-size: 15px 15px;
+  background-image:
+    linear-gradient(to right, grey 1px, transparent 1px),
+    linear-gradient(to bottom, grey 1px, transparent 1px);
+}
+
+textarea {
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  resize: none;
+  font-size: 16px;
+  font-family: "Datatype";
+  padding: 10px;
+
+  border: none;
+  outline: none;
+  
+  /* Force the textarea to manage its own vertical scrollbar */
+  overflow-y: auto !important; 
+}
+
+textarea:focus {
+
+}
+
+p {
+	font-family: Times New Roman;
+	font-style: italic;
+	line-height: 2;
+	font-size: 12pt;
+} 
+
+h1 {
+	font-family: Times New Roman;
+	font-style: italic;
+	font-size: 16pt;
+	font-weight: normal;
+	line-height: 1.5;
+}
+
+input {
+	height: 25px;
+	width: 100%;
+	border-radius: 0px;
+	border-width: 1px;
+	border-color: black;
+	border-style: solid;
+	padding-left: 5px;
+}
+
+select {
+	height: 25px;
+	width: 100%;
+	background: white;
+	border-radius: 0px;
+	border-width: 1px;
+	border-color: black;
+	border-style: solid;
+	padding-left: 5px;
+}
+
+#book-canvas .pagedjs_pages {
+    zoom: var(--preview-zoom, 100%);
+    margin: 0 auto;
+}
+
+.pagedjs_sheet {
+		border-width: 1px;
+	border-color: black;
+	border-style: solid;
+}
+
+
+
+
+#left-side, 
+#right-side {
+    grid-row: 1;
+    height: 100%;
+}
+
+
+#status-bar {
+grid-column: 1 / -1;
+    grid-row: 2;
+    
+    height: 60px;
+    background: white;
+    border-top: 1px solid black;
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+    box-sizing: border-box;
+    z-index: 9999;
+}
+
+/* Styling für den Zoom-Bereich in der Statusleiste */
+#zoom-control {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#zoom-input {
+	height: 25px;
+	width: 50px;
+	border-style: none;
+	text-align: right;
+
+  font-family: "Inter";
+  font-size: 14px;
+}
+
+/* Right-Side Code */
+
+#right-side {
+	overflow-x: scroll;
+	overflow-y: scroll;
+}
+
+
+/* Left-Side Code */
+
+#left-side {
+	display: flex;
+	align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+#left-side-ui {
+	display: grid;
+	grid-template-columns: 1fr;
+	grid-template-rows: 1fr 75px;
+	gap: 10px;
+	height: 90%;
+	max-height: 90%;
+	aspect-ratio: 5 / 7;
+	overflow: hidden;
+
+}
+
+#text-editor {
+	display: grid;
+	grid-template-columns: 1fr 3fr;
+	grid-template-rows: 1fr;
+	height: 100%;
+	background: white;
+	overflow-y: auto;
+	border-color: black;
+	border-width: 1px;
+	border-style: solid;
+}
+
+
+.panel {
+	display: grid;
+	grid-template-columns: 1fr 3fr;
+	grid-template-rows: 1fr;
+	height: 100%;
+	background: white;
+	overflow-y: hidden;
+	border-color: black;
+	border-width: 1px;
+	border-style: solid;
+}
+
+.panel-settings {
+	display: block;
+	background: white;
+	padding: 10px;
+	overflow-y: auto;
+}	
+
+.navigation {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: 1fr;
+	background: white;
+	border-color: black;
+	border-width: 1px;
+	border-style: solid;
+}
+
+.sidebar{
+	border-right: 1px solid black !important;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+/* Global elements */
+
+button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 75px;
+	border: none;
+	background: none;
+
+}
+
+.sidebar-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 65px;
+	width: calc(100% - 20px);;
+	border: 1px solid black;
+	margin: 10px;
+	background: none;
+}
+
+.sidebar-button:hover{
+	   color: #000; /* Text wird schwarz */
+    font-weight: 600; /* Optional: Text wird leicht fetter */
+    /*text-decoration: underline;*/
+}
+
+.navigation-tab {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+#demo {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 40px;
+	width: 100px;
+	border: 1px solid black;
+	margin: 10px;
+	background: #A2FF7E;
+
+}
+
+#demo:hover {
+	  color: #000; /* Text wird schwarz */
+    font-weight: 600; /* Optional: Text wird leicht fetter */
+    /*text-decoration: underline;*/
+}
+
+/* Styling, wenn der Tab AKTIV ist */
+.tab-button.active {
+    color: #000; /* Text wird schwarz */
+    font-weight: 600; /* Optional: Text wird leicht fetter */
+    /*text-decoration: underline;*/
+}
+
+.tab-button:hover {
+    color: #000; /* Text wird schwarz */
+    font-weight: 600; /* Optional: Text wird leicht fetter */
+    /*text-decoration: underline;*/
+}
+
+.input {
+	width: 100%;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Input Elements*/
+
+.simple-dropdown {
+	width: 100%;
+	margin-bottom: 5px;
+}
+
+.formula-input-dropwdown {
+	display: grid;
+	grid-template-columns: 3fr 1fr;
+	margin-bottom: 5px;
+}
+
+.formula-input {
+	width: 100%;
+	margin-bottom: 5px;
+}
+
+.formula-input
+
+.dropdown {
+	width: 100%;
+}
+
+.formula-select {
+	background: #A2FF7E;
+	border-left: none !important;
+}
+
+.page-preset-select {
+	background: white;
+}
+
+.radio-input {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: 1fr;
+
+	height: 25px;
+}
+
+.btn-control {
+	display: none;
+}
+
+.btn-display {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	border-color: black;
+	border-width: 1px;
+	border-style: solid;
+	border-left: none;
+}
+
+.btn-display:first-child{
+	border-left: solid;
+	border-color: black;
+	border-width: 1px;
+}
+
+.btn-display:has(.btn-control:checked) {
+	background: #A2FF7E;
+}
+
+.char {
+	display: inline-block !important;
+}
+
+
+@media print {
+    /* Blendet das GESAMTE linke Interface, die Statusleiste und alle Navigationen komplett aus */
+    #left-side, 
+    #status-bar, 
+    .navigation, 
+    .sidebar {
+        display: none !important;
+    }
+
+    .pagedjs_sheet {
+		border: none !important;
+		}
+
+    /* Zwingt den Body, sich im Druckmodus vollflächig zu verhalten */
+    body {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        background-image: none !important; /* Entfernt das Raster-Hintergrundbild */
+        overflow: visible !important;
+    }
+
+    /* Das Buch-Canvas nimmt im PDF die volle Breite ein */
+    #right-side {
+        grid-column: 1 / -1;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        background: transparent !important;
+    }
+
+    /* Schützt die Paged.js-Seitenstruktur vor unerwünschten Browser-Rahmen */
+    .pagedjs_pages {
+        zoom: 100% !important; /* Exportiert immer in echter 100%-Größe, egal was der Zoom-Eintrag sagt! */
+        transform: none !important;
+    }
+}

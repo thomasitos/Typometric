@@ -1,0 +1,57 @@
+@font-face {
+  font-family: GoogleSansFlex;
+  src: url('../fonts/GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf') format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Datatype;
+  src: url('../fonts/Datatype-VariableFont_wdth,wght.ttf') format("truetype");
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: Scan;
+  src: url('../fonts/00_kristinesørensen_Scan_200VF.ttf') format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Licht;
+  src: url('../fonts/00_Licht_Pino_0_0VF.ttf') format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Opak;
+  src: url('../fonts/00_MattiSiemoneit_Opak_500VF.ttf') format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Unrial;
+  src: url('../fonts/00_RoiBetzalel_Unrial.ttf') format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Decovar;
+  src: url('../fonts/DecovarAlpha-VF.ttf') format("truetype");
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: ShapeShifter;
+  src: url('../fonts/ShapeShifter_2Termin_1Übung_2VF.ttf') format("truetype");
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: Digitaluhr;
+  src: url('../fonts/DigitalUhr6VF.ttf') format("truetype");
+  font-style: normal;
+}
+
