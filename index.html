@@ -26,6 +26,9 @@
     
     <!-- Erst jetzt das Paged.js-Skript selbst laden -->
     <script src="assets/js/vendor/paged.polyfill.js"></script>
+
+    <!-- index.html (im <head> Tag) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
 </head>
 
@@ -52,6 +55,21 @@
             <div id="styles" class="panel hidden">
                 <div class="sidebar">
                     <div>
+                        <button id=btn-body-settings class="sidebar-button">
+                            <p>Body</p>
+                        </button>
+                        <button id=btn-h1-settings class="sidebar-button">
+                            <p>H1</p>
+                        </button>
+                        <button id=btn-h2-settings class="sidebar-button">
+                            <p>H2</p>
+                        </button>
+                        <button id=btn-bold-settings class="sidebar-button">
+                            <p>Bold</p>
+                        </button>
+                        <button id=btn-italic-settings class="sidebar-button">
+                            <p>Italic</p>
+                        </button>
                     </div>
                     <div>
                         <button id="btn-export-pdf-2" class="sidebar-button">
@@ -74,6 +92,15 @@
                                 </div>
                             </div>
                             <div>
+                                <p>Font style</p>
+                                <div class="simple-dropdown">
+                                    <select id="font-style-select">
+                                        <!-- Wird dynamisch per JS befüllt -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="advanced-metrics">
+                            <div>
                                 <p>Font size</p>
                                 <div class="formula-input-dropwdown">
                                 <input type="text" id="font-size-input" 
@@ -95,55 +122,74 @@
                                 value="0pt">
                                 </div>
                             </div>
+                            </div>
                             <div id="variable-settings" class="hidden">
                             <h1 style="margin-top: 15px">Variable Typography</h1>
                                 <div id="axes-container"></div>
                             </div>
-                            <h1 style="margin-top: 15px">Paragraph</h1>
-                            <div>
-                                <p>Alignment</p>
-                                <div class="radio-input">
-                                <label class="btn-display">Left
-                                <input class="btn-control" type="radio" id="alignment-left" name="alignment" value="left" checked>
-                                </label>
-                                <label class="btn-display">Right
-                                <input class="btn-control" type="radio" id="alignment-right" name="alignment" value="right">
-                                </label>
-                                <label class="btn-display">Center
-                                <input class="btn-control" type="radio" id="alignment-center" name="alignment" value="center">
-                                </label>
-                                <label class="btn-display">Justify
-                                <input class="btn-control" type="radio" id="alignment-justify" name="alignment" value="justify">
-                                </label>
+                            <div id="paragraph-settings">
+                                <h1 style="margin-top: 15px">Paragraph</h1>
+                                <div>
+                                    <p>Alignment</p>
+                                    <div class="radio-input">
+                                    <label class="btn-display">Left
+                                    <input class="btn-control" type="radio" id="alignment-left" name="alignment" value="left" checked>
+                                    </label>
+                                    <label class="btn-display">Right
+                                    <input class="btn-control" type="radio" id="alignment-right" name="alignment" value="right">
+                                    </label>
+                                    <label class="btn-display">Center
+                                    <input class="btn-control" type="radio" id="alignment-center" name="alignment" value="center">
+                                    </label>
+                                    <label class="btn-display">Justify
+                                    <input class="btn-control" type="radio" id="alignment-justify" name="alignment" value="justify">
+                                    </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p>Margin left</p>
+                                    <div class="formula-input">
+                                    <input type="text" id="margin-left-input" 
+                                    value="0mm">
+                                    </div>
+                                </div>
+                                <div>
+                                    <p>Margin right</p>
+                                    <div class="formula-input">
+                                    <input type="text" id="margin-right-input" 
+                                    value="0mm">
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <p>Margin left</p>
-                                <div class="formula-input">
-                                <input type="text" id="margin-left-input" 
-                                value="0mm">
-                                </div>
-                            </div>
-                            <div>
-                                <p>Margin right</p>
-                                <div class="formula-input">
-                                <input type="text" id="margin-right-input" 
-                                value="0mm">
-                                </div>
-                            </div>
+                            <div id="advanced-transform">
                             <h1 style="margin-top: 15px">Transform</h1>
                             <div>
                                 <p>Translate X</p>
                                 <div>
-                                <input type="text" id="translate-x-input">
+                                <input type="text" id="translate-x-input" value="0px">
                                 </div>
                             </div>
                             <div>
                                 <p>Translate Y</p>
                                 <div>
-                                <input type="text" id="translate-y-input"> 
+                                <input type="text" id="translate-y-input" value="0px"> 
                                 </div>
                             </div>
+                            </div>
+                            <div id="advanced-toggle-section">
+                            <h1 style="margin-top: 15px">Settings</h1>
+                            <div>
+                                <p>Advanced settings</p>
+                                <div class="radio-input">
+                                    <label class="btn-display">On
+                                        <input class="btn-control" type="radio" id="advanced-on" name="advanced-mode" value="on">
+                                    </label>
+                                    <label class="btn-display">Off
+                                        <input class="btn-control" type="radio" id="advanced-off" name="advanced-mode" value="off" checked>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                         </div>                                   
                     </div>
                 </div>
@@ -223,7 +269,7 @@
             <h1>Typometric</h1>
         </div>
         <div>
-            <button id="demo"><p>Press me!</p></button>
+            <button id="demo"><p>Demo</p></button>
         </div>
         <div id="zoom-control">
             <input type="text" value="100%" id="zoom-input">                            

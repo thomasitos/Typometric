@@ -1,6 +1,7 @@
 import { formulaPresets } from './formulas.js';
-import { pagePresets } from './pages.js'
-import { demoPresets } from './demos.js'
+import { pagePresets } from './pages.js';
+import { demoPresets } from './demos.js';
+import { initialElementStyles } from './elementStyles.js';
 
 const editor = document.getElementById('editor');
 const canvas = document.getElementById('book-canvas');
@@ -19,7 +20,7 @@ const btnTabSettings = document.getElementById('btn-tab-settings');
 const textEditorPanel = document.getElementById('text-editor');
 const stylesPanel = document.getElementById('styles');
 const pagesPanel = document.getElementById('pages');
-const settingspanel = document.getElementById('settings')
+const settingspanel = document.getElementById('settings');
 const alignmentRadios = document.querySelectorAll('input[name="alignment"]');
 const marginLeftInput = document.getElementById('margin-left-input');
 const marginRightInput = document.getElementById('margin-right-input');
@@ -36,45 +37,214 @@ const btnNewPage = document.getElementById('btn-new-page');
 const demoBtn = document.getElementById('demo');
 const translateXInput = document.getElementById('translate-x-input');
 const translateYInput = document.getElementById('translate-y-input');
+const paragraphSettings = document.getElementById('paragraph-settings');
+const advancedMetrics = document.getElementById('advanced-metrics');
+const advancedTransform = document.getElementById('advanced-transform');
+const advancedToggleSection = document.getElementById('advanced-toggle-section');
+const advancedRadios = document.querySelectorAll('input[name="advanced-mode"]');
 
+// Aktuell ausgewählter Sub-Tab (Standard: body)
+let currentSubTab = 'body';
+
+// Buttons der Sub-Sidebar
+const subTabButtons = {
+    body: document.getElementById('btn-body-settings'),
+    h1: document.getElementById('btn-h1-settings'),
+    h2: document.getElementById('btn-h2-settings'),
+    bold: document.getElementById('btn-bold-settings'),
+    italic: document.getElementById('btn-italic-settings')
+};
+
+// main.js ganz oben bei den DOM-Elementen
+const fontStyleSelect = document.getElementById('font-style-select');
+
+// Die 4 Basis-Schriftschnitte
+const standardFontStyles = [
+    { label: 'Regular', weight: '400', style: 'normal' },
+    { label: 'Italic', weight: '400', style: 'italic' },
+    { label: 'Bold', weight: '700', style: 'normal' },
+    { label: 'Bold Italic', weight: '700', style: 'italic' }
+];
+
+const elementStyles = structuredClone(initialElementStyles);
 
 let typingTimeout;
 
+// Funktion zum Befüllen des Dropdowns
+function initFontStyleDropdown() {
+    fontStyleSelect.innerHTML = '';
+    standardFontStyles.forEach((item, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = item.label;
+        fontStyleSelect.appendChild(option);
+    });
+}
+
+// 1. Speichert alle aktuellen UI-Eingaben im Datenmodell des aktiven Tabs
+function saveCurrentSubTabState() {
+    const current = elementStyles[currentSubTab];
+    if (!current) return;
+
+    const isInlineElement = (currentSubTab === 'bold' || currentSubTab === 'italic');
+    const activeAdvancedRadio = document.querySelector('input[name="advanced-mode"]:checked');
+    
+    if (activeAdvancedRadio) {
+        current.isAdvanced = (activeAdvancedRadio.value === 'on');
+    }
+
+    // Wenn es ein Inline-Element ist UND Advanced Mode OFF ist -> alles erben!
+    if (isInlineElement && !current.isAdvanced) {
+        current.font = 'inherit';
+        current.fontSize = 'inherit';
+        current.lineHeight = 'inherit';
+        current.letterSpacing = 'inherit';
+        current.translateX = 'inherit';
+        current.translateY = 'inherit';
+    } else {
+        // Im Advanced Mode oder bei Block-Elementen die echten Input-Werte speichern
+        if (!fontSelect.disabled) {
+            current.font = fontSelect.value;
+        }
+        current.fontSize = fontSizeInput.value;
+        current.lineHeight = lineHeightInput.value;
+        current.letterSpacing = letterSpacingInput.value;
+        current.translateX = translateXInput.value;
+        current.translateY = translateYInput.value;
+    }
+
+    current.marginLeft = marginLeftInput.value;
+    current.marginRight = marginRightInput.value;
+
+    const activeRadio = document.querySelector('input[name="alignment"]:checked');
+    if (activeRadio) current.alignment = activeRadio.value;
+
+    const selectedIndex = fontStyleSelect.value;
+    if (selectedIndex !== '' && standardFontStyles[selectedIndex]) {
+        current.fontWeight = standardFontStyles[selectedIndex].weight;
+        current.fontStyle = standardFontStyles[selectedIndex].style;
+    }
+
+    // Achsen (Variable Fonts) speichern
+    current.axes = {};
+    const activeAxisInputs = axesContainer.querySelectorAll('.axis-input');
+    activeAxisInputs.forEach(input => {
+        current.axes[input.dataset.axisId] = input.value;
+    });
+}
+
+// 2. Lädt die gespeicherten Werte des gewählten Tabs zurück in die UI-Inputs
+function loadSubTabState(key) {
+    saveCurrentSubTabState();
+    currentSubTab = key;
+    const data = elementStyles[key];
+
+    const isInlineElement = (key === 'bold' || key === 'italic');
+
+    // 1. Radio-Buttons im HTML synchronisieren mit den Daten des aktuellen Tabs
+    const isAdvancedOn = !!data.isAdvanced;
+    const targetRadio = document.getElementById(isAdvancedOn ? 'advanced-on' : 'advanced-off');
+    if (targetRadio) targetRadio.checked = true;
+
+    // 2. Paragraph-Einstellungen bei Inline-Elementen verstecken
+    if (paragraphSettings) {
+        paragraphSettings.classList.toggle('hidden', isInlineElement);
+    }
+
+    // 3. Settings-Schalter NUR bei Bold & Italic anzeigen
+    if (advancedToggleSection) {
+        advancedToggleSection.classList.toggle('hidden', !isInlineElement);
+    }
+
+    // 4. Sichtbarkeit der erweiterten Felder steuern
+    const showAdvanced = !isInlineElement || isAdvancedOn;
+    if (advancedMetrics) advancedMetrics.classList.toggle('hidden', !showAdvanced);
+    if (advancedTransform) advancedTransform.classList.toggle('hidden', !showAdvanced);
+
+    // 5. Schriftart-Dropdown steuern
+    if (isInlineElement && !isAdvancedOn) {
+        fontSelect.disabled = true;
+        fontSelect.value = elementStyles.body.font;
+    } else {
+        fontSelect.disabled = false;
+        fontSelect.value = (data.font === 'inherit') ? elementStyles.body.font : data.font;
+    }
+
+    fontSelect.dispatchEvent(new Event('change'));
+
+    // Beim Befüllen der Textfelder:
+    fontSizeInput.value = (data.fontSize === 'inherit') ? elementStyles.body.fontSize : data.fontSize;
+    lineHeightInput.value = (data.lineHeight === 'inherit') ? elementStyles.body.lineHeight : data.lineHeight;
+    letterSpacingInput.value = (data.letterSpacing === 'inherit') ? elementStyles.body.letterSpacing : data.letterSpacing;
+    marginLeftInput.value = data.marginLeft;
+    marginRightInput.value = data.marginRight;
+    translateXInput.value = (data.translateX === 'inherit') ? elementStyles.body.translateX : data.translateX;
+    translateYInput.value = (data.translateY === 'inherit') ? elementStyles.body.translateY : data.translateY;
+
+
+    const styleIndex = standardFontStyles.findIndex(
+    s => s.weight === (data.fontWeight || '400') && s.style === (data.fontStyle || 'normal')
+    );
+    fontStyleSelect.value = styleIndex >= 0 ? styleIndex : 0;
+
+    const radioToSelect = document.querySelector(`input[name="alignment"][value="${data.alignment}"]`);
+    if (radioToSelect) radioToSelect.checked = true;
+
+    // Achsen-Inputs befüllen
+    Object.keys(data.axes).forEach(axisId => {
+        const axisInput = axesContainer.querySelector(`.axis-input[data-axis-id="${axisId}"]`);
+        if (axisInput) axisInput.value = data.axes[axisId];
+    });
+
+    // Visuelles Feedback für aktiven Button
+    Object.keys(subTabButtons).forEach(btnKey => {
+        if (subTabButtons[btnKey]) {
+            subTabButtons[btnKey].classList.toggle('active', btnKey === key);
+        }
+    });
+}
+
+// 3. Event-Listener an die Sub-Buttons hängen
+function initSubTabNavigation() {
+    Object.keys(subTabButtons).forEach(key => {
+        const btn = subTabButtons[key];
+        if (btn) {
+            btn.addEventListener('click', () => loadSubTabState(key));
+        }
+    });
+
+    if (subTabButtons.body) subTabButtons.body.classList.add('active');
+}
 
 // Initialisierung des Seiten-Dropdowns
 function initPagePresetsDropdown() {
     pagePresetSelect.innerHTML = '';
     
-    // "Benutzerdefiniert"-Eintrag als Standard-Fallback
     const customOption = document.createElement('option');
     customOption.textContent = "Custom";
     customOption.value = "-1";
     pagePresetSelect.appendChild(customOption);
 
-    // Presets ins Dropdown laden
     pagePresets.forEach((preset, index) => {
         const option = document.createElement('option');
         option.textContent = preset.name;
         option.value = index;
         
-        // Da dein HTML mit 148x210 startet (A5), wählen wir A5 direkt voraus
         if (preset.width === "148mm" && preset.height === "210mm") {
             option.selected = true;
         }
         pagePresetSelect.appendChild(option);
     });
 
-    // Event-Listener: Wenn ein Preset gewählt wird
     pagePresetSelect.addEventListener('change', (event) => {
         const index = parseInt(event.target.value);
         if (index >= 0) {
             pageWidthInput.value = pagePresets[index].width;
             pageHeightInput.value = pagePresets[index].height;
-            triggerBookRender(); // Buch mit neuer Größe neu rendern
+            triggerBookRender();
         }
     });
 
-    // Wenn der Nutzer manuell tippt, Dropdown auf "Custom" stellen
     pageWidthInput.addEventListener('input', () => {
         pagePresetSelect.value = "-1";
         triggerBookRender();
@@ -85,110 +255,84 @@ function initPagePresetsDropdown() {
     });
 }
 
-// DIE NEUE NAVIGATION-FUNKTION:
 function initTabNavigation() {
-    // Verknüpfe jeden Button direkt mit seinem zugehörigen Panel
-    // Achtung bei 'settingspanel': Hier hast du im Const-Block ein kleines 'p' verwendet.
     const tabs = [
         { button: btnTabEditor, panel: textEditorPanel },
         { button: btnTabStyles, panel: stylesPanel },
-        { button: btnTabPages, panel: pagesPanel },
-        // { button: btnTabSettings, panel: settingspanel } //
+        { button: btnTabPages, panel: pagesPanel }
     ];
 
     tabs.forEach(activeTab => {
         activeTab.button.addEventListener('click', () => {
-            // 1. Schleife: Erstmal alle Panels verstecken und alle Buttons deaktivieren
             tabs.forEach(tab => {
                 tab.panel.classList.add('hidden');
                 tab.button.classList.remove('active');
             });
 
-            // 2. Aktivierung: Nur das angeklickte Tab sichtbar und aktiv machen
             activeTab.panel.classList.remove('hidden');
             activeTab.button.classList.add('active');
         });
     });
 }
 
-// Funktion zum Verarbeiten und Anwenden des Zoom-Werts
 function applyZoom(rawValue) {
-    // Extrahiert nur die Zahlen aus dem String (z.B. "85%" -> 85)
     let zoomValue = parseInt(rawValue, 10);
 
-    // Fallback falls der Input leer war oder keine Zahl enthielt
     if (isNaN(zoomValue)) {
         zoomValue = 100;
     }
 
-    // Setze Grenzen (z. B. minimal 30% und maximal 150% Zoom)
     zoomValue = Math.max(10, Math.min(200, zoomValue));
 
-    // CSS-Variable auf dem Canvas updaten
     canvas.style.setProperty('--preview-zoom', `${zoomValue}%`);
-
-    // Das Input-Feld wieder sauber mit Prozentzeichen befüllen
     zoomInput.value = `${zoomValue}%`;
 }
 
-
 // 1. DIE SCHRIFTEN-DATENBANK
-// Du musst hier nur noch 'name', 'cssValue' und (falls variabel) den 'url'-Pfad zur Datei angeben!
 const fontConfig = {
     "arial": {
         name: "Arial",
         cssValue: "Arial, sans-serif"
-        // Keine URL = statische Systemschrift, keine Achsen zu scannen
     },
     "baskerville": {
         name: "Baskerville",
         cssValue: "Baskerville, serif"
-        // Keine URL = statische Systemschrift, keine Achsen zu scannen
     },
     "centurygothic": {
         name: "Century Gothic",
         cssValue: "'Century Gothic', sans-serif"
-        // Keine URL = statische Systemschrift, keine Achsen zu scannen
     },
     "couriernew": {
         name: "Courier New",
         cssValue: "'Courier New', Courier, monospace"
-        // Keine URL = statische Systemschrift, keine Achsen zu scannen
     },
     "garamond": {
         name: "Garamond",
         cssValue: "Garamond, serif"
-        // Keine URL = statische Systemschrift, keine Achsen zu scannen
     },
     "georgia": {
         name: "Georgia",
         cssValue: "'Georgia', serif"
-        // Keine URL = statische Systemschrift, keine Achsen zu scannen
     },
     "impact": {
         name: "Impact",
         cssValue: "Impact, sans-serif"
-        // Keine URL = statische Systemschrift, keine Achsen zu scannen
     },
     "palatino": {
         name: "Palatino",
         cssValue: "Palatino, 'Palatino Linotype', serif"
-        // Keine URL = statische Systemschrift, keine Achsen zu scannen
     },
     "times": {
         name: "Times New Roman",
         cssValue: "'Times New Roman', serif"
-        // Keine URL = statische Systemschrift, keine Achsen zu scannen
     },
     "trebuchetms": {
         name: "Trebuchet MS",
         cssValue: "'Trebuchet MS', sans-serif"
-        // Keine URL = statische Systemschrift, keine Achsen zu scannen
     },
     "verdana": {
         name: "Verdana",
         cssValue: "Verdana, sans-serif"
-        // Keine URL = statische Systemschrift, keine Achsen zu scannen
     },
     "licht": {
         name: "Licht",
@@ -213,7 +357,7 @@ const fontConfig = {
     "googlesansflex": {
         name: "Google Sans Flex",
         cssValue: "'GoogleSansFlex', serif",
-        url: "assets/fonts/GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf" // Pfad zu deiner lokalen Datei anpassen!
+        url: "assets/fonts/GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf"
     },
     "digitaluhr": {
         name: "Digitaluhr",
@@ -223,35 +367,30 @@ const fontConfig = {
     "shapeshifter": {
         name: "ShapeShifter",
         cssValue: "ShapeShifter, sans-serif",
-        url: "assets/fonts/ShapeShifter_2Termin_1Übung_2VF.ttf"
+        url: "assets/fonts/ShapeShifter_2Termin_1Übung_2VF.ttf"
     },
     "decovar": {
         name: "Decovar",
         cssValue: "'Decovar', serif",
-        url: "assets/fonts/DecovarAlpha-VF.ttf" // Pfad zu deiner lokalen Datei anpassen!
+        url: "assets/fonts/DecovarAlpha-VF.ttf"
     },
 };
 
 // 2. DER AUTOMATISCHE ACHSEN-SCANNER
-// Diese Funktion lädt die lokalen Dateien und liest die Achsen aus, bevor das Interface startet
 async function autoDetectLocalAxes() {
     for (const key in fontConfig) {
         const font = fontConfig[key];
         
-        // Wenn ein URL-Pfad existiert, lesen wir die Datei aus
         if (font.url) {
             try {
-                // Holt die Schriftdatei vom lokalen Server als Binärdaten
                 const response = await fetch(font.url);
                 const arrayBuffer = await response.arrayBuffer();
                 
-                // opentype.js parst die Datei
                 const parsedFont = opentype.parse(arrayBuffer);
-                font.axes = []; // Array für gefundene Achsen erstellen
+                font.axes = [];
 
                 if (parsedFont.tables && parsedFont.tables.fvar && parsedFont.tables.fvar.axes) {
                     parsedFont.tables.fvar.axes.forEach(axis => {
-                        // Achse automatisch in das System-Format pushen
                         font.axes.push({
                             id: axis.tag,
                             label: `${axis.tag} (${axis.minValue} bis ${axis.maxValue})`,
@@ -263,10 +402,10 @@ async function autoDetectLocalAxes() {
                 console.log(`✓ Achsen für ${font.name} erfolgreich gescannt:`, font.axes);
             } catch (err) {
                 console.error(`Fehler beim Scannen von ${font.name} unter ${font.url}:`, err);
-                font.axes = []; // Fallback auf leeres Array bei Fehlern
+                font.axes = [];
             }
         } else {
-            font.axes = []; // Statische Schriften haben standardmäßig leere Achsen
+            font.axes = [];
         }
     }
 }
@@ -282,31 +421,27 @@ function initFontDropdown() {
     }
 }
 
-// Befüllt das Schriftgrößen-Dropdown mit denselben Presets
 function initFontSizeDropdown() {
-    fontSizeSelect.innerHTML = ''; // Leeren
+    fontSizeSelect.innerHTML = '';
     
-    // Platzhalter hinzufügen
     const placeholderOption = document.createElement('option');
     placeholderOption.textContent = "fx";
     placeholderOption.value = "";
     fontSizeSelect.appendChild(placeholderOption);
 
-    // Optionen aus der formulas.js generieren
     formulaPresets.forEach(preset => {
         const option = document.createElement('option');
         option.textContent = preset.name;
-        option.value = preset.fontSize;;
+        option.value = preset.fontSize;
         fontSizeSelect.appendChild(option);
     });
 
-    // Wenn ein Preset gewählt wird: In den Font-Size-Input schreiben und Buch rendern
     fontSizeSelect.addEventListener('change', (event) => {
         const chosenFormula = event.target.value;
         if (chosenFormula !== "") {
-            fontSizeInput.value = chosenFormula; // Schreibt den Wert in #formula-input
+            fontSizeInput.value = chosenFormula;
             fontSizeSelect.selectedIndex = 0;
-            triggerBookRender();                // Rendert das Buch neu
+            triggerBookRender();
         }
     });
 }
@@ -338,38 +473,31 @@ function updateAxisInputs() {
         input.className = 'axis-input';
         input.dataset.axisId = axis.id;
         input.value = axis.default;
-        input.addEventListener('input', triggerBookRender); // Lauscht auf Tastatur-Eingaben
+        input.addEventListener('input', triggerBookRender);
         dropdownDiv.appendChild(input);
 
-        // 1. Das Select-Menü erzeugen
         const select = document.createElement('select');
-        select.className ="formula-select";
+        select.className = "formula-select";
         
-        // 2. Einen leeren Standard-Eintrag hinzufügen
         const placeholderOption = document.createElement('option');
         placeholderOption.textContent = "fx";
         placeholderOption.value = "";
         select.appendChild(placeholderOption);
 
-        // 3. NEU: Dynamisch die Optionen aus der importierten formulas.js generieren
         formulaPresets.forEach(preset => {
-        const option = document.createElement('option');
-        option.textContent = preset.name;
-    
-        // Ersetze den Platzhalter 'MAX_VAL' global mit dem echten Maximalwert dieser Achse
-        const dynamicAxisFormula = preset.axis.replace(/MAX_VAL/g, axis.maxValue);
-    
-        option.value = dynamicAxisFormula; // Die berechnete Formel ohne "pt" wird hinterlegt
-        select.appendChild(option);
+            const option = document.createElement('option');
+            option.textContent = preset.name;
+            const dynamicAxisFormula = preset.axis.replace(/MAX_VAL/g, axis.maxValue);
+            option.value = dynamicAxisFormula;
+            select.appendChild(option);
         });
 
-        // 4. NEU: Wenn der User ein Preset auswählt, Wert ins Input schreiben & Buch rendern
         select.addEventListener('change', (event) => {
             const chosenFormula = event.target.value;
             if (chosenFormula !== "") {
-                input.value = chosenFormula; // Überschreibt den Text im Input-Feld
+                input.value = chosenFormula;
                 select.selectedIndex = 0;
-                triggerBookRender();         // Stößt das Paged.js-Rendering an
+                triggerBookRender();
             }
         });
 
@@ -379,174 +507,173 @@ function updateAxisInputs() {
     });
 }
 
-// In main.js -> Funktion applyDynamicStyles() anpassen
+// In main.js -> Funktion applyDynamicStyles()
 function applyDynamicStyles() {
-    // 1. Alle Werte auslesen (deine bestehenden Inputs)
-    const fontSizeFormula = fontSizeInput.value;
-    const lineHeightFormula = lineHeightInput.value;
-    const letterSpacingFormula = letterSpacingInput.value;
-    const marginLeftFormula = marginLeftInput.value;
-    const marginRightFormula = marginRightInput.value;
-    
-    // NEU: Die Transform-Werte auslesen (mit '0px' Fallback, falls leer)
-    const translateXFormula = translateXInput.value.trim() || '0px';
-    const translateYFormula = translateYInput.value.trim() || '0px';
+    saveCurrentSubTabState();
 
-    let selectedAlignment = 'left';
-    const activeRadio = document.querySelector('input[name="alignment"]:checked');
-    if (activeRadio) {
-        selectedAlignment = activeRadio.value;
-    }
+    const selectorMap = {
+        body: ':is(p, li, blockquote)',
+        h1: 'h1',
+        h2: 'h2',
+        bold: ':is(strong, b)',
+        italic: ':is(em, i)'
+    };
 
-    const selectedKey = fontSelect.value;
-    const font = fontConfig[selectedKey];
-    if (!font) return;
-    
-    let fontVariationRules = '';
-    const activeAxisInputs = axesContainer.querySelectorAll('.axis-input');
-    if (activeAxisInputs.length > 0) {
-        const compiledAxes = [];
-        activeAxisInputs.forEach(input => {
-            const axisId = input.dataset.axisId;
-            const axisFormula = input.value;
-            if (axisFormula.trim() !== '') compiledAxes.push(`'${axisId}' calc(${axisFormula})`);
-        });
-        if (compiledAxes.length > 0) fontVariationRules = `font-variation-settings: ${compiledAxes.join(', ')} !important;`;
-    } else {
-        fontVariationRules = `font-variation-settings: normal !important;`;
-    }
-    
-    // 2. CSS-Injektion
-    dynamicEffectsStyle.textContent = `
-        .pagedjs_area {
-            text-align: ${selectedAlignment} !important;
-            padding-left: calc(${marginLeftFormula}) !important;
-            padding-right: calc(${marginRightFormula}) !important;
-            box-sizing: border-box !important;
-        }
-
-        .book-paragraph {
-            font-family: ${font.cssValue} !important;
-            font-size: calc(${fontSizeFormula}) !important;
-            line-height: calc(${lineHeightFormula}) !important;
-            
-            --char-index: 0;
-            --char-total: 1;
-        }
-
-        /* Die mathematischen Effekte bleiben auf den einzelnen Buchstaben aktiv */
-        .char {
-            display: inline-block !important; /* Lebenswichtig, damit transform greift! */
-            transform: translate(calc(${translateXFormula}), calc(${translateYFormula})) !important;
-            
-            font-family: ${font.cssValue} !important;
-            font-size: calc(${fontSizeFormula}) !important; 
-            letter-spacing: calc(${letterSpacingFormula}) !important; 
-            ${fontVariationRules}
-        }
+    let generatedCss = `
+        .word { display: inline-block !important; }
     `;
+
+    Object.keys(elementStyles).forEach(key => {
+        const style = elementStyles[key];
+        const selector = selectorMap[key];
+
+        const effectiveFontKey = (style.font === 'inherit') ? elementStyles.body.font : style.font;
+        const font = fontConfig[effectiveFontKey] || fontConfig['arial'];
+
+        const effectiveFontSize = (style.fontSize === 'inherit') ? elementStyles.body.fontSize : style.fontSize;
+        const effectiveLineHeight = (style.lineHeight === 'inherit') ? elementStyles.body.lineHeight : style.lineHeight;
+        const effectiveLetterSpacing = (style.letterSpacing === 'inherit') ? elementStyles.body.letterSpacing : style.letterSpacing;
+
+        const effectiveTx = (style.translateX === 'inherit') ? elementStyles.body.translateX : style.translateX;
+        const effectiveTy = (style.translateY === 'inherit') ? elementStyles.body.translateY : style.translateY;
+
+        const tx = (effectiveTx || '0px').trim();
+        const ty = (effectiveTy || '0px').trim();
+
+        // Variable Font Rules aufbauen
+        let fontVariationRules = 'font-variation-settings: normal !important;';
+        if (style.axes && Object.keys(style.axes).length > 0) {
+            const axesRules = Object.keys(style.axes)
+                .filter(axisId => style.axes[axisId].trim() !== '')
+                .map(axisId => `'${axisId}' calc(${style.axes[axisId]})`);
+            if (axesRules.length > 0) {
+                fontVariationRules = `font-variation-settings: ${axesRules.join(', ')} !important;`;
+            }
+        }
+
+        generatedCss += `
+    .pagedjs_area ${selector} {
+        text-align: ${style.alignment} !important;
+        padding-left: calc(${style.marginLeft}) !important;
+        padding-right: calc(${style.marginRight}) !important;
+        box-sizing: border-box !important;
+        font-family: ${font.cssValue} !important;
+        font-weight: ${style.fontWeight || '400'} !important;
+        font-style: ${style.fontStyle || 'normal'} !important;
+        font-size: calc(${effectiveFontSize}) !important;
+        line-height: calc(${effectiveLineHeight}) !important;
+    }
+
+    .pagedjs_area ${selector} .char {
+        display: inline-block !important;
+        transform: translate(calc(${tx}), calc(${ty})) !important;
+        font-family: ${font.cssValue} !important;
+        font-weight: ${style.fontWeight || '400'} !important;
+        font-style: ${style.fontStyle || 'normal'} !important;
+        font-size: calc(${effectiveFontSize}) !important;
+        letter-spacing: calc(${effectiveLetterSpacing}) !important;
+        ${fontVariationRules}
+    }
+    `;
+    });
+
+    dynamicEffectsStyle.textContent = generatedCss;
 }
 
-// 6. THE ENGINE: Der Paged.js Rendering Loop (mit Debounce)
+let isRendering = false;
+
 function triggerBookRender() {
     clearTimeout(typingTimeout);
-    
-    // WICHTIG: Hier MUSS das 'async' direkt vor den Klammern stehen!
+
     typingTimeout = setTimeout(async () => {
-        
-        // 1. CLEANUP: Alte Paged.js Reste aus dem Head löschen
-        document.querySelectorAll('head style').forEach(style => {
-            if (style.id !== 'dynamic-effects' && (style.textContent.includes('.pagedjs_') || style.textContent.includes('@page'))) {
-                style.remove();
-            }
-        });
+        if (isRendering) {
+            triggerBookRender();
+            return;
+        }
 
-        // 2. CSS-EFFEKTE: Buchstaben-Transformationen aktualisieren
-        applyDynamicStyles();
+        isRendering = true;
+        let pageStyleUrl = null;
 
-        // 3. BLOB-ERZEUGUNG: Seitengröße, Ränder und Umbruchregeln für Paged.js definieren
-        const pageWidth = pageWidthInput.value;
-        const pageHeight = pageHeightInput.value;
-        
-        const mTop = pageMarginTopInput.value;
-        const mBottom = pageMarginBottomInput.value;
-        const mLeft = pageMarginLeftInput.value;
-        const mRight = pageMarginRightInput.value;
-
-        // KORRIGIERT: Wir haben den ".splitting .word"-Block komplett entfernt!
-        const pageStyleContent = `
-            @page { 
-                size: ${pageWidth} ${pageHeight}; 
-                margin: ${mTop} ${mRight} ${mBottom} ${mLeft};
-            }
-            .book-section {
-                display: block !important;
-            }
-            .book-section + .book-section {
-                break-before: page !important;
-                page-break-before: always !important;
-            }
-        `;
-        
-        const pageStyleBlob = new Blob([pageStyleContent], { type: 'text/css' });
-        const pageStyleUrl = URL.createObjectURL(pageStyleBlob);
-
-        // 4. TEXT-VERARBEITUNG: Sektionen und native Absätze bauen
-        const userText = editor.value;
-        const ghost = document.createElement('div');
-        
-        // Text an den drei Bindestrichen spalten
-        const sections = userText.split('---');
-
-        sections.forEach(sectionText => {
-            const sectionDiv = document.createElement('div');
-            sectionDiv.className = 'book-section';
-            
-            // Text der Sektion in einzelne Zeilen/Absätze spalten
-            const paragraphs = sectionText.split('\n');
-
-            paragraphs.forEach(paraText => {
-                const paraDiv = document.createElement('div');
-                paraDiv.className = 'book-paragraph';
-                
-                if (paraText.trim() === '') {
-                    // Leere Zeile: Unsichtbares Zeichen setzen und Splitting überspringen
-                    paraDiv.textContent = '\u00A0';
-                } else {
-                    // Zeile mit Text: Normal befüllen und splitten
-                    paraDiv.textContent = paraText;
-                    Splitting({ 
-                        target: paraDiv, 
-                        by: 'chars' 
-                    });
+        try {
+            document.querySelectorAll('head style').forEach(style => {
+                if (style.id !== 'dynamic-effects' && (style.textContent.includes('.pagedjs_') || style.textContent.includes('@page'))) {
+                    style.remove();
                 }
-                
-                sectionDiv.appendChild(paraDiv);
             });
 
-            ghost.appendChild(sectionDiv);
-        });
-        
-        // 5. INDEXIERUNG: Alle Buchstaben global lückenlos durchnummerieren
-        const allChars = ghost.querySelectorAll('.char');
-        const totalChars = allChars.length;
-        
-        allChars.forEach((char, index) => {
-            char.style.setProperty('--char-index', index);
-            char.style.setProperty('--char-total', totalChars);
-        });
-        
-        canvas.innerHTML = '';
-        canvas.style.setProperty('--char-total', totalChars);
-        
-        // 6. RENDERING: Paged.js starten (Hier wird das 'await' benötigt!)
-        const previewer = new Paged.Previewer();
-        await previewer.preview(ghost.innerHTML, ['assets/css/page.css', pageStyleUrl], canvas);
+            applyDynamicStyles();
 
-        // 7. SPEICHERBEREINIGUNG: Blob-URL freigeben
-        URL.revokeObjectURL(pageStyleUrl);
+            const pageWidth = pageWidthInput.value;
+            const pageHeight = pageHeightInput.value;
+            
+            const mTop = pageMarginTopInput.value;
+            const mBottom = pageMarginBottomInput.value;
+            const mLeft = pageMarginLeftInput.value;
+            const mRight = pageMarginRightInput.value;
 
-    }, 400); // Wartet 400ms nach dem letzten Tastendruck, bevor gerechnet wird
+            const pageStyleContent = `
+                @page { 
+                    size: ${pageWidth} ${pageHeight}; 
+                    margin: ${mTop} ${mRight} ${mBottom} ${mLeft};
+                }
+                .book-section {
+                    display: block !important;
+                }
+                .book-section + .book-section {
+                    break-before: page !important;
+                    page-break-before: always !important;
+                }
+            `;
+            
+            const pageStyleBlob = new Blob([pageStyleContent], { type: 'text/css' });
+            pageStyleUrl = URL.createObjectURL(pageStyleBlob);
+
+            marked.setOptions({
+                breaks: true,
+                gfm: true
+            });
+
+            const userText = editor.value;
+            const ghost = document.createElement('div');
+            const sections = userText.split('---');
+
+            sections.forEach(sectionText => {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'book-section';
+                sectionDiv.innerHTML = marked.parse(sectionText);
+
+                Splitting({ 
+                    target: sectionDiv, 
+                    by: 'chars' 
+                });
+
+                ghost.appendChild(sectionDiv);
+            });
+            
+            const allChars = ghost.querySelectorAll('.char');
+            const totalChars = allChars.length;
+            
+            allChars.forEach((char, index) => {
+                char.style.setProperty('--char-index', index);
+                char.style.setProperty('--char-total', totalChars);
+            });
+            
+            canvas.innerHTML = '';
+            canvas.style.setProperty('--char-total', totalChars);
+            
+            const previewer = new Paged.Previewer();
+            await previewer.preview(ghost.innerHTML, ['assets/css/page.css', pageStyleUrl], canvas);
+
+        } catch (err) {
+            console.warn('Paged.js Render-Zyklus abgefangen:', err);
+        } finally {
+            if (pageStyleUrl) {
+                URL.revokeObjectURL(pageStyleUrl);
+            }
+            isRendering = false;
+        }
+
+    }, 400);
 }
 
 // 7. LISTENERS
@@ -563,6 +690,15 @@ pageMarginRightInput.addEventListener('input', triggerBookRender);
 translateXInput.addEventListener('input', applyDynamicStyles);
 translateYInput.addEventListener('input', applyDynamicStyles);
 
+[fontSizeInput, lineHeightInput, letterSpacingInput, marginLeftInput, marginRightInput, translateXInput, translateYInput].forEach(input => {
+    if (input) {
+        input.addEventListener('input', () => {
+            saveCurrentSubTabState();
+            triggerBookRender();
+        });
+    }
+});
+
 fontSelect.addEventListener('change', () => {
     updateAxisInputs();
     triggerBookRender();
@@ -572,29 +708,37 @@ alignmentRadios.forEach(radio => {
     radio.addEventListener('change', triggerBookRender);
 });
 
-// 1. Wenn der Nutzer Enter drückt
 zoomInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
         applyZoom(zoomInput.value);
-        zoomInput.blur(); // Nimmt den Fokus weg, tarnt das Feld wieder
+        zoomInput.blur();
     }
 });
 
-// 2. Wenn der Nutzer das Feld verlässt (Klick ins Leere)
 zoomInput.addEventListener('blur', () => {
     applyZoom(zoomInput.value);
 });
 
-// 3. Komfort-Feature: Beim Klicken direkt den gesamten Text markieren
 zoomInput.addEventListener('click', () => {
     zoomInput.select();
 });
 
 exportPdfButtons.forEach(button => {
     button.addEventListener('click', () => {
-        // Öffnet den nativen Druckdialog des Browsers. 
-        // Dort kann der Nutzer direkt "Als PDF speichern" wählen.
         window.print();
+    });
+});
+
+fontStyleSelect.addEventListener('change', () => {
+    saveCurrentSubTabState();
+    triggerBookRender();
+});
+
+advancedRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+        saveCurrentSubTabState();
+        loadSubTabState(currentSubTab);
+        triggerBookRender();
     });
 });
 
@@ -604,18 +748,14 @@ if (btnNewPage) {
         let end = editor.selectionEnd;
         const text = editor.value;
 
-        // SICHERHEITSNETZ: Wenn das Feld noch nie fokussiert wurde (start und end sind 0),
-        // aber bereits Text existiert, setzen wir den "Cursor" virtuell ans Ende des Textes.
         if (start === 0 && end === 0 && text.length > 0) {
             start = end = text.length;
         }
 
         const insertion = "\n---\n";
 
-        // Text einfügen
         editor.value = text.substring(0, start) + insertion + text.substring(end);
 
-        // Cursor neu positionieren & Fokus zurückgeben
         const newCursorPos = start + insertion.length;
         editor.selectionStart = editor.selectionEnd = newCursorPos;
         editor.focus();
@@ -626,27 +766,22 @@ if (btnNewPage) {
 
 let currentPresetIndex = 0;
 
-// 3. Click-Event-Listener
 if (demoBtn) {
     demoBtn.addEventListener('click', () => {
         const preset = demoPresets[currentPresetIndex];
         
-        // Schriftart im Dropdown ändern und Event auslösen, damit die Achsenregler generiert werden
         fontSelect.value = preset.font;
         fontSelect.dispatchEvent(new Event('change'));
         
-        // Text-Inputs befüllen
         fontSizeInput.value = preset.fontSize;
         lineHeightInput.value = preset.lineHeight;
         letterSpacingInput.value = preset.letterSpacing;
         
-        // Textausrichtung setzen
         const alignRadio = document.querySelector(`input[name="alignment"][value="${preset.alignment}"]`);
         if (alignRadio) {
             alignRadio.checked = true;
         }
         
-        // Dynamische Variable-Font-Achsen befüllen
         Object.keys(preset.axes).forEach(axisId => {
             const axisInput = axesContainer.querySelector(`.axis-input[data-axis-id="${axisId}"]`);
             if (axisInput) {
@@ -654,34 +789,27 @@ if (demoBtn) {
             }
         });
         
-        // Rendering direkt anstoßen
         triggerBookRender();
-        
-        // Index für das nächste Preset erhöhen
         currentPresetIndex = (currentPresetIndex + 1) % demoPresets.length;
     });
 }
-
-
 
 // INITIALER ASYNCHRONER STARTABLAUF
 async function startApp() {
     editor.value = '';
     canvas.innerHTML = '';
 
-    await autoDetectLocalAxes(); // 1. Alle lokalen Schriftdateien scannen und Achsen im Hintergrund eintragen
-    initFontDropdown();          // 2. Dropdown bauen
-    updateAxisInputs();          // 3. Inputs für die erste Schriftart anzeigen
-    applyDynamicStyles();         // 4. CSS scharf schalten
+    await autoDetectLocalAxes();
+    initFontDropdown();
+    initFontStyleDropdown();
+    initSubTabNavigation();
+    loadSubTabState('body');
     initFontSizeDropdown();
     initPagePresetsDropdown();
     initTabNavigation();
 }
 
-// App starten!
 startApp();
-
-// Am Ende deiner main.js (beim Laden der Seite)
 
 const defaultText = `Typometric breaks typography free from its static chains by incorporating mathematics directly into the design process. Unlike traditional layout software, where values are fixed, every parameter can be controlled using mathematical formulas. Designers are no longer bound to rigid weights or font sizes. Rather, they can use presets or custom equations to style each word, letter, or line individually. This opens up completely new possibilities for creative typographic expression.
 
@@ -689,11 +817,8 @@ Typometric breaks typography free from its static chains by incorporating mathem
 
 Typometric breaks typography free from its static chains by incorporating mathematics directly into the design process. Unlike traditional layout software, where values are fixed, every parameter can be controlled using mathematical formulas. Designers are no longer bound to rigid weights or font sizes. Rather, they can use presets or custom equations to style each word, letter, or line individually. This opens up completely new possibilities for creative typographic expression.`;
 
-// Falls die Textarea leer ist, befüllen wir sie mit dem Standardtext
 if (editor && !editor.value) {
     editor.value = defaultText;
 }
 
-// WICHTIG: Direkt das erste Rendering anstoßen, 
-// damit das Buch rechts nicht leer startet, sondern den Text sofort anzeigt!
 triggerBookRender();
