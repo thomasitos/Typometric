@@ -38,18 +38,40 @@
             <div id="text-editor">
                 <div class="sidebar">
                     <div>
-                        <button class="sidebar-button" id="btn-new-page">
-                        <p>New Page</p>
-                        </button>
+                        <div>
+                            <button class="sidebar-button" id="btn-text">
+                            <p>Text</p>
+                            </button>
+                        </div>
+                        <div>
+                            <button class="sidebar-button" id="btn-margins">
+                            <p>Margins</p>
+                            </button>
+                        </div>
                     </div>
                     <div>
-                        <button id="btn-export-pdf-1" class="sidebar-button">
-                            <p>Export PDF</p>
-                        </button>        
+                        <div>
+                            <button class="sidebar-button" id="btn-new-page">
+                            <p>New Page</p>
+                            </button>
+                        </div>
+                        <div>
+                            <button id="btn-export-pdf-1" class="sidebar-button">
+                                <p>Export PDF</p>
+                            </button>        
+                        </div>
                     </div>
                 </div>
                 <div id=text-editor-textarea>
                     <textarea id="editor" autocomplete="off" placeholder="Write your text here..." value=""></textarea>
+                </div>
+                <div id="margin-editor-textarea" class="hidden">
+                    <textarea id="margin-editor-top-left" autocomplete="off" placeholder="Edit top left"></textarea>
+                    <textarea id="margin-editor-top-center" autocomplete="off" placeholder="Edit top center"></textarea>
+                    <textarea id="margin-editor-top-right" autocomplete="off" placeholder="Edit top right"></textarea>
+                    <textarea id="margin-editor-bottom-left" autocomplete="off" placeholder="Edit bottom left"></textarea>
+                    <textarea id="margin-editor-bottom-center" autocomplete="off" placeholder="Edit bottom center"></textarea>
+                    <textarea id="margin-editor-bottom-right" autocomplete="off" placeholder="Edit bottom right"></textarea>
                 </div>
             </div>
             <div id="styles" class="panel hidden">

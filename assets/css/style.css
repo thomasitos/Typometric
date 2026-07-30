@@ -179,6 +179,12 @@ grid-column: 1 / -1;
 	border-style: solid;
 }
 
+#margin-editor-textarea {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
+}
+
 
 .panel {
 	display: grid;
@@ -241,7 +247,7 @@ button {
 
 .sidebar-button:hover{
     font-weight: 600; /* Optional: Text wird leicht fetter */
-    
+
     /*text-decoration: underline;*/
 
 }

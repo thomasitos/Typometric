@@ -42,6 +42,19 @@ const advancedMetrics = document.getElementById('advanced-metrics');
 const advancedTransform = document.getElementById('advanced-transform');
 const advancedToggleSection = document.getElementById('advanced-toggle-section');
 const advancedRadios = document.querySelectorAll('input[name="advanced-mode"]');
+const btnText = document.getElementById('btn-text');
+const btnMargins = document.getElementById('btn-margins');
+const textEditorTextarea = document.getElementById('text-editor-textarea');
+const marginEditorTextarea = document.getElementById('margin-editor-textarea');
+
+const marginInputs = {
+    topLeft: document.getElementById('margin-editor-top-left'),
+    topCenter: document.getElementById('margin-editor-top-center'),
+    topRight: document.getElementById('margin-editor-top-right'),
+    bottomLeft: document.getElementById('margin-editor-bottom-left'),
+    bottomCenter: document.getElementById('margin-editor-bottom-center'),
+    bottomRight: document.getElementById('margin-editor-bottom-right')
+};
 
 // Aktuell ausgewählter Sub-Tab (Standard: body)
 let currentSubTab = 'body';
@@ -611,19 +624,31 @@ function triggerBookRender() {
             const mLeft = pageMarginLeftInput.value;
             const mRight = pageMarginRightInput.value;
 
+            const getMarginContent = (inputEl) => {
+            const val = inputEl ? inputEl.value.trim() : '';
+            return val ? `content: "${val}";` : 'content: none;';
+            };
+
             const pageStyleContent = `
-                @page { 
-                    size: ${pageWidth} ${pageHeight}; 
-                    margin: ${mTop} ${mRight} ${mBottom} ${mLeft};
-                }
-                .book-section {
-                    display: block !important;
-                }
-                .book-section + .book-section {
-                    break-before: page !important;
-                    page-break-before: always !important;
-                }
-            `;
+            @page { 
+            size: ${pageWidth} ${pageHeight}; 
+            margin: ${mTop} ${mRight} ${mBottom} ${mLeft};
+
+            @top-left { ${getMarginContent(marginInputs.topLeft)} }
+            @top-center { ${getMarginContent(marginInputs.topCenter)} }
+            @top-right { ${getMarginContent(marginInputs.topRight)} }
+            @bottom-left { ${getMarginContent(marginInputs.bottomLeft)} }
+            @bottom-center { ${getMarginContent(marginInputs.bottomCenter)} }
+            @bottom-right { ${getMarginContent(marginInputs.bottomRight)} }
+            }
+            .book-section {
+                display: block !important;
+            }
+            .book-section + .book-section {
+                break-before: page !important;
+                page-break-before: always !important;
+            }
+             `;
             
             const pageStyleBlob = new Blob([pageStyleContent], { type: 'text/css' });
             pageStyleUrl = URL.createObjectURL(pageStyleBlob);
@@ -740,6 +765,33 @@ advancedRadios.forEach(radio => {
         loadSubTabState(currentSubTab);
         triggerBookRender();
     });
+});
+
+
+
+if (btnText) {
+    btnText.addEventListener('click', () => {
+        textEditorTextarea.classList.remove('hidden');
+        marginEditorTextarea.classList.add('hidden');
+        btnText.classList.add('active');
+        btnMargins.classList.remove('active');
+    });
+}
+
+// Button 2: Zu den Rändern wechseln
+if (btnMargins) {
+    btnMargins.addEventListener('click', () => {
+        marginEditorTextarea.classList.remove('hidden');
+        textEditorTextarea.classList.add('hidden');
+        btnMargins.classList.add('active');
+        btnText.classList.remove('active');
+    });
+}
+
+Object.values(marginInputs).forEach(input => {
+    if (input) {
+        input.addEventListener('input', triggerBookRender);
+    }
 });
 
 if (btnNewPage) {
