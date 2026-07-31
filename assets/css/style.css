@@ -1,3 +1,27 @@
+/* ==========================================================================
+   1. DESIGN TOKENS & VARIABLES
+   ========================================================================== */
+:root {
+  /* Colors */
+  --bg-grid-color: grey;
+  --bg-panel: #ffffff;
+  --color-accent: #a2ff7e;
+  --color-border: #000000;
+  --color-text: #000000;
+
+  /* Typography */
+  --font-ui: "Inter", sans-serif;
+  --font-editor: "Datatype", monospace;
+  --font-serif: "Times New Roman", serif;
+
+  /* Dimensions & Layout */
+  --statusbar-height: 60px;
+  --border-thin: 1px solid var(--color-border);
+}
+
+/* ==========================================================================
+   2. RESET & BASE STYLES
+   ========================================================================== */
 * {
   margin: 0;
   padding: 0;
@@ -5,409 +29,358 @@
 }
 
 body {
-  display: grid !important;
-  /* Zwei gleich große Spalten */
-  grid-template-columns: 50vw 50vw !important; 
-  
-  /* NEU: Erste Zeile nimmt den Rest, die zweite Zeile ist exakt 30px hoch für die Leiste */
-  grid-template-rows: calc(100vh - 60px) 60px !important; 
-  
-  width: 100vw !important;
-  height: 100vh !important;
-  overflow: hidden !important; 
+  display: grid;
+  grid-template-columns: 50vw 50vw;
+  grid-template-rows: calc(100vh - var(--statusbar-height)) var(--statusbar-height);
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 
-  font-family: "Inter";
+  font-family: var(--font-ui);
   font-size: 14px;
+  color: var(--color-text);
 
   background-size: 15px 15px;
   background-image:
-    linear-gradient(to right, grey 1px, transparent 1px),
-    linear-gradient(to bottom, grey 1px, transparent 1px);
+    linear-gradient(to right, var(--bg-grid-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--bg-grid-color) 1px, transparent 1px);
 }
 
-textarea {
-  height: 100%;
-  width: 100%;
-  box-sizing: border-box;
-  resize: none;
-  font-size: 16px;
-  font-family: "Datatype";
-  padding: 10px;
-
-  border: none;
-  outline: none;
-  
-  /* Force the textarea to manage its own vertical scrollbar */
-  overflow-y: auto !important; 
-}
-
-textarea:focus {
-
-}
-
-#left-side p, 
+/* Typography Overrides for Left UI & Statusbar */
+#left-side p,
 #status-bar p {
-    font-family: Times New Roman;
-    font-style: italic;
-    line-height: 2;
-    font-size: 12pt;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 12pt;
+  line-height: 2;
 }
 
-#left-side h1, 
+#left-side h1,
 #status-bar h1 {
-	font-family: Times New Roman;
-	font-style: italic;
-	font-size: 16pt;
-	font-weight: normal;
-	line-height: 1.5;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 16pt;
+  font-weight: normal;
+  line-height: 1.5;
 }
 
-input {
-	height: 25px;
-	width: 100%;
-	border-radius: 0px;
-	border-width: 1px;
-	border-color: black;
-	border-style: solid;
-	padding-left: 5px;
-}
-
+/* ==========================================================================
+   3. FORM CONTROLS & INPUTS
+   ========================================================================== */
+input[type="text"],
 select {
-	height: 25px;
-	width: 100%;
-	background: white;
-	border-radius: 0px;
-	border-width: 1px;
-	border-color: black;
-	border-style: solid;
-	padding-left: 5px;
-}
-
-#book-canvas .pagedjs_pages {
-    zoom: var(--preview-zoom, 100%);
-    margin: 0 auto;
-}
-
-.pagedjs_sheet {
-		border-width: 1px;
-	border-color: black;
-	border-style: solid;
-}
-
-
-
-
-#left-side, 
-#right-side {
-    grid-row: 1;
-    height: 100%;
-}
-
-
-#status-bar {
-grid-column: 1 / -1;
-    grid-row: 2;
-    
-    height: 60px;
-    background: white;
-    border-top: 1px solid black;
-    
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 15px;
-    box-sizing: border-box;
-    z-index: 9999;
-}
-
-/* Styling für den Zoom-Bereich in der Statusleiste */
-#zoom-control {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
-#zoom-input {
-	height: 25px;
-	width: 50px;
-	border-style: none;
-	text-align: right;
-
-  font-family: "Inter";
+  height: 25px;
+  width: 100%;
+  padding-left: 5px;
+  border: var(--border-thin);
+  border-radius: 0;
+  background-color: var(--bg-panel);
+  font-family: var(--font-ui);
   font-size: 14px;
 }
 
-/* Right-Side Code */
-
-#right-side {
-	overflow-x: scroll;
-	overflow-y: scroll;
+textarea {
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  border: none;
+  outline: none;
+  resize: none;
+  overflow-y: auto;
+  font-family: var(--font-editor);
+  font-size: 16px;
 }
 
+.input,
+.dropdown,
+.simple-dropdown,
+.formula-input {
+  width: 100%;
+  margin-bottom: 5px;
+}
 
-/* Left-Side Code */
+.formula-input-dropwdown {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  margin-bottom: 5px;
+}
 
-#left-side {
-	display: flex;
-	align-items: center;
+.formula-select {
+  background-color: var(--color-accent);
+  border-left: none;
+}
+
+.page-preset-select {
+  background-color: var(--bg-panel);
+}
+
+/* Radio Button Control Group */
+.radio-input {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  height: 25px;
+}
+
+.btn-control {
+  display: none;
+}
+
+.btn-display {
+  display: flex;
+  align-items: center;
   justify-content: center;
+  border: var(--border-thin);
+  border-left: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.btn-display:first-child {
+  border-left: var(--border-thin);
+}
+
+.btn-display:has(.btn-control:checked) {
+  background-color: var(--color-accent);
+}
+
+/* ==========================================================================
+   4. LAYOUT PANELS (LEFT & RIGHT)
+   ========================================================================== */
+#left-side,
+#right-side {
+  grid-row: 1;
   height: 100%;
+}
+
+/* Left Side Workspace */
+#left-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
 }
 
 #left-side-ui {
-	display: grid;
-	grid-template-columns: 1fr;
-	grid-template-rows: 1fr 75px;
-	gap: 10px;
-	height: 90%;
-	max-height: 90%;
-	aspect-ratio: 5 / 7;
-	overflow: hidden;
-
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 75px;
+  gap: 10px;
+  height: 90%;
+  max-height: 90%;
+  aspect-ratio: 5 / 7;
+  overflow: hidden;
 }
 
 #text-editor {
-	display: grid;
-	grid-template-columns: 1fr 3fr;
-	grid-template-rows: 1fr;
-	height: 100%;
-	background: white;
-	overflow-y: auto;
-	border-color: black;
-	border-width: 1px;
-	border-style: solid;
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  grid-template-rows: 1fr;
+  height: 100%;
+  background-color: var(--bg-panel);
+  border: var(--border-thin);
+  overflow-y: auto;
 }
 
 #margin-editor-textarea {
-	display: grid;
-	grid-template-columns: 1fr 1fr 1fr;
-	grid-template-rows: 1fr 1fr;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
 }
 
-
 .panel {
-	display: grid;
-	grid-template-columns: 1fr 3fr;
-	grid-template-rows: 1fr;
-	height: 100%;
-	background: white;
-	overflow-y: hidden;
-	border-color: black;
-	border-width: 1px;
-	border-style: solid;
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  grid-template-rows: 1fr;
+  height: 100%;
+  background-color: var(--bg-panel);
+  border: var(--border-thin);
+  overflow-y: hidden;
 }
 
 .panel-settings {
-	display: block;
-	background: white;
-	padding: 10px;
-	overflow-y: auto;
-}	
+  display: block;
+  padding: 10px;
+  background-color: var(--bg-panel);
+  overflow-y: auto;
+}
+
+/* Sidebar Navigation Inside Panels */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: var(--border-thin);
+}
 
 .navigation {
-	display: grid;
-	grid-auto-flow: column;
-	grid-auto-columns: 1fr;
-	background: white;
-	border-color: black;
-	border-width: 1px;
-	border-style: solid;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  background-color: var(--bg-panel);
+  border: var(--border-thin);
 }
 
-.sidebar{
-	border-right: 1px solid black !important;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
+/* Right Side Workspace (Canvas) */
+#right-side {
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
-/* Global elements */
+#book-canvas .pagedjs_pages {
+  zoom: var(--preview-zoom, 100%);
+  margin: 0 auto;
+}
 
+.pagedjs_sheet {
+  border: var(--border-thin);
+}
+
+/* ==========================================================================
+   5. BUTTONS & NAVIGATION
+   ========================================================================== */
 button {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: 75px;
-	border: none;
-	background: none;
-
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 75px;
+  border: none;
+  background: none;
+  cursor: pointer;
 }
 
 .sidebar-button {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: 65px;
-	width: calc(100% - 20px);;
-	border: 1px solid black;
-	margin: 10px;
-	background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 65px;
+  width: calc(100% - 20px);
+  margin: 10px;
+  border: var(--border-thin);
+  background: none;
+  cursor: pointer;
+  transition: font-weight 0.15s ease, background-color 0.15s ease;
 }
 
-.sidebar-button:hover{
-    font-weight: 600; /* Optional: Text wird leicht fetter */
-
-    /*text-decoration: underline;*/
-
-}
-
-.sidebar-button.active {
-	font-weight: 600; /* Optional: Text wird leicht fetter */
-	background: #A2FF7E;
-}
-
-.navigation-tab {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-#demo {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: 40px;
-	width: 100px;
-	border: 1px solid black;
-	margin: 10px;
-	background: #A2FF7E;
-
-}
-
-#demo:hover {
-	  color: #000; /* Text wird schwarz */
-    font-weight: 600; /* Optional: Text wird leicht fetter */
-    /*text-decoration: underline;*/
-}
-
-/* Styling, wenn der Tab AKTIV ist */
-.tab-button.active {
-    color: #000; /* Text wird schwarz */
-    font-weight: 600; /* Optional: Text wird leicht fetter */
-    /*text-decoration: underline;*/
+.sidebar-button:hover {
+  font-weight: 600;
+  color: var(--color-text);
 }
 
 .tab-button:hover {
-    color: #000; /* Text wird schwarz */
-    font-weight: 600; /* Optional: Text wird leicht fetter */
-    /*text-decoration: underline;*/
+  font-weight: 600;
 }
 
-.input {
-	width: 100%;
+.tab-button.active {
+  font-weight: 600;
+  color: var(--color-text);
 }
 
-.hidden {
-    display: none !important;
+.sidebar-button.active {
+  font-weight: 600;
+  background-color: var(--color-accent);
+  color: var(--color-text);
 }
 
-/* Input Elements*/
-
-.simple-dropdown {
-	width: 100%;
-	margin-bottom: 5px;
+.navigation-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.formula-input-dropwdown {
-	display: grid;
-	grid-template-columns: 3fr 1fr;
-	margin-bottom: 5px;
+#demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  width: 100px;
+  margin: 10px;
+  border: var(--border-thin);
+  background-color: var(--color-accent);
+  cursor: pointer;
+  transition: font-weight 0.15s ease;
 }
 
-.formula-input {
-	width: 100%;
-	margin-bottom: 5px;
+#demo:hover {
+  color: var(--color-text);
+  font-weight: 600;
 }
 
-.formula-input
-
-.dropdown {
-	width: 100%;
+/* ==========================================================================
+   6. STATUSBAR & UTILITIES
+   ========================================================================== */
+#status-bar {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  height: var(--statusbar-height);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 15px;
+  background-color: var(--bg-panel);
+  border-top: var(--border-thin);
+  box-sizing: border-box;
+  z-index: 9999;
 }
 
-.formula-select {
-	background: #A2FF7E;
-	border-left: none !important;
+#zoom-control {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 
-.page-preset-select {
-	background: white;
-}
-
-.radio-input {
-	display: grid;
-	grid-auto-flow: column;
-	grid-auto-columns: 1fr;
-
-	height: 25px;
-}
-
-.btn-control {
-	display: none;
-}
-
-.btn-display {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-
-	border-color: black;
-	border-width: 1px;
-	border-style: solid;
-	border-left: none;
-}
-
-.btn-display:first-child{
-	border-left: solid;
-	border-color: black;
-	border-width: 1px;
-}
-
-.btn-display:has(.btn-control:checked) {
-	background: #A2FF7E;
+#zoom-input {
+  height: 25px;
+  width: 50px;
+  border: none;
+  text-align: right;
+  font-family: var(--font-ui);
+  font-size: 14px;
 }
 
 .char {
-	display: inline-block !important;
+  display: inline-block !important;
 }
 
+.hidden {
+  display: none !important;
+}
 
+/* ==========================================================================
+   7. PRINT MEDIA STYLES
+   ========================================================================== */
 @media print {
-    /* Blendet das GESAMTE linke Interface, die Statusleiste und alle Navigationen komplett aus */
-    #left-side, 
-    #status-bar, 
-    .navigation, 
-    .sidebar {
-        display: none !important;
-    }
+  /* Hide user interface components during printing */
+  #left-side,
+  #status-bar,
+  .navigation,
+  .sidebar {
+    display: none !important;
+  }
 
-    .pagedjs_sheet {
-		border: none !important;
-		}
+  .pagedjs_sheet {
+    border: none !important;
+  }
 
-    /* Zwingt den Body, sich im Druckmodus vollflächig zu verhalten */
-    body {
-        display: block !important;
-        width: 100% !important;
-        height: auto !important;
-        background-image: none !important; /* Entfernt das Raster-Hintergrundbild */
-        overflow: visible !important;
-    }
+  body {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    background-image: none !important;
+    overflow: visible !important;
+  }
 
-    /* Das Buch-Canvas nimmt im PDF die volle Breite ein */
-    #right-side {
-        grid-column: 1 / -1;
-        width: 100% !important;
-        height: auto !important;
-        overflow: visible !important;
-        padding: 0 !important;
-        background: transparent !important;
-    }
+  #right-side {
+    grid-column: 1 / -1;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
 
-    /* Schützt die Paged.js-Seitenstruktur vor unerwünschten Browser-Rahmen */
-    .pagedjs_pages {
-        zoom: 100% !important; /* Exportiert immer in echter 100%-Größe, egal was der Zoom-Eintrag sagt! */
-        transform: none !important;
-    }
+  .pagedjs_pages {
+    zoom: 100% !important;
+    transform: none !important;
+  }
 }

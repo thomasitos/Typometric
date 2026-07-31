@@ -1,8 +1,6 @@
-.pagedjs_page {
-  background: white;
-  margin-bottom: 30px !important;
-}
-
+/* ==========================================================================
+   1. PAGED.JS PREVIEW & PAGE CONTAINERS
+   ========================================================================== */
 .pagedjs_pages {
   display: flex;
   flex-direction: column;
@@ -10,35 +8,40 @@
   background: transparent;
 }
 
-.section-content {
-    /* Behält Zeilenumbrüche (\n) und mehrfache Leerzeichen aus dem Editor bei 
-       und bricht den Text am Zeilenende trotzdem sauber automatisch um */
-    white-space: pre-wrap !important; 
+.pagedjs_page {
+  background: white;
+  margin-bottom: 30px !important;
 }
 
-.char {
-  font-family: 'Times New Roman', serif;
-  
-  /* font-variation-settings: 'slnt' calc(-10 + (var(--char-index) / var(--char-total)) * 10);*/
-  /* font-variation-settings: 'wght' calc((sin(var(--char-index) * 15deg) - 1) * -400);*/
-  /*font-size: calc((sin(var(--char-index) * 7deg) + 2) * 5pt);*/
-  /* font-variation-settings: 'wdth' calc((sin(var(--char-index) * 5deg) - 1) * -75);*/
-}
-
+/* ==========================================================================
+   2. PRINT AREA & TYPOGRAPHY BASELINE
+   ========================================================================== */
 .pagedjs_area {
   text-align: left;
   text-wrap: pretty;
-  hyphens: auto; 
+  hyphens: auto;
 }
 
+.section-content {
+  /* Behält Zeilenumbrüche (\n) und Leerzeichen aus dem Editor bei 
+     und bricht Text am Zeilenende automatisch um */
+  white-space: pre-wrap !important;
+}
 
-/* 1. Die Sektion bleibt ein sauberes Block-Element */
-/* Das äußere Element ist ein stinknormaler Block */
+/* Basis für Zeichen-Elemente (wird dynamisch von main.js / applyDynamicStyles erweitert) */
+.char {
+  display: inline-block !important;
+}
 
+/* ==========================================================================
+   3. PAGE BREAKS & SECTIONS
+   ========================================================================== */
+.book-section {
+  display: block !important;
+}
 
-/* Der Seitenumbruch: Paged.js führt ihn jetzt absolut fehlerfrei aus,
-   weil das Element nicht durch Splitting.js modifiziert wurde */
+/* Garantiert saubere Seitenumbrüche vor jeder neuen Sektion (getrennt durch ---) */
 .book-section + .book-section {
-    break-before: page !important;
-    page-break-before: always !important;
+  break-before: page !important;
+  page-break-before: always !important;
 }

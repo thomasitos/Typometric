@@ -46,6 +46,9 @@ const btnText = document.getElementById('btn-text');
 const btnMargins = document.getElementById('btn-margins');
 const textEditorTextarea = document.getElementById('text-editor-textarea');
 const marginEditorTextarea = document.getElementById('margin-editor-textarea');
+// In main.js ganz oben bei den DOM-Elementen:
+const fontUploadInput = document.getElementById('font-upload-input');
+let previousFontKey = 'arial'; // Merkt sich die letzte Schrift vor dem Klick auf "Upload"
 
 const marginInputs = {
     topLeft: document.getElementById('margin-editor-top-left'),
@@ -55,6 +58,18 @@ const marginInputs = {
     bottomCenter: document.getElementById('margin-editor-bottom-center'),
     bottomRight: document.getElementById('margin-editor-bottom-right')
 };
+
+const STYLES = {
+    REGULAR:     { label: 'Regular', weight: '400', style: 'normal' },
+    ITALIC:      { label: 'Italic', weight: '400', style: 'italic' },
+    BOLD:        { label: 'Bold', weight: '700', style: 'normal' },
+    BOLD_ITALIC: { label: 'Bold Italic', weight: '700', style: 'italic' }
+};
+
+const ALL_4_STYLES = [STYLES.REGULAR, STYLES.ITALIC, STYLES.BOLD, STYLES.BOLD_ITALIC];
+const REGULAR_ONLY  = [STYLES.REGULAR];
+const NO_ITALIC     = [STYLES.REGULAR, STYLES.BOLD];
+const NO_BOLD     = [STYLES.REGULAR, STYLES.ITALIC];
 
 // Aktuell ausgewählter Sub-Tab (Standard: body)
 let currentSubTab = 'body';
@@ -94,13 +109,42 @@ function initFontStyleDropdown() {
     });
 }
 
+function attachCommitListener(input, onCommit) {
+    if (!input) return;
+
+    input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            input.blur(); // Löst automatisch das 'blur'-Event aus
+        }
+    });
+
+    input.addEventListener('blur', () => {
+        if (onCommit) onCommit();
+    });
+}
+
 // 1. Speichert alle aktuellen UI-Eingaben im Datenmodell des aktiven Tabs
 function saveCurrentSubTabState() {
     const current = elementStyles[currentSubTab];
     if (!current) return;
 
+    // In main.js -> saveCurrentSubTabState()
+
+
     const isInlineElement = (currentSubTab === 'bold' || currentSubTab === 'italic');
     const activeAdvancedRadio = document.querySelector('input[name="advanced-mode"]:checked');
+
+    const effectiveFontKey = (current.font === 'inherit') ? elementStyles.body.font : current.font;
+    const font = fontConfig[effectiveFontKey] || fontConfig['arial'];
+    const availableStyles = font.styles || ALL_4_STYLES;
+
+const selectedIndex = parseInt(fontStyleSelect.value, 10);
+if (!isNaN(selectedIndex) && availableStyles[selectedIndex]) {
+    current.styleIndex = selectedIndex; // NEU: Index im Datenmodell merken
+    current.fontWeight = availableStyles[selectedIndex].weight;
+    current.fontStyle = availableStyles[selectedIndex].style;
+}
     
     if (activeAdvancedRadio) {
         current.isAdvanced = (activeAdvancedRadio.value === 'on');
@@ -132,11 +176,6 @@ function saveCurrentSubTabState() {
     const activeRadio = document.querySelector('input[name="alignment"]:checked');
     if (activeRadio) current.alignment = activeRadio.value;
 
-    const selectedIndex = fontStyleSelect.value;
-    if (selectedIndex !== '' && standardFontStyles[selectedIndex]) {
-        current.fontWeight = standardFontStyles[selectedIndex].weight;
-        current.fontStyle = standardFontStyles[selectedIndex].style;
-    }
 
     // Achsen (Variable Fonts) speichern
     current.axes = {};
@@ -146,7 +185,6 @@ function saveCurrentSubTabState() {
     });
 }
 
-// 2. Lädt die gespeicherten Werte des gewählten Tabs zurück in die UI-Inputs
 function loadSubTabState(key) {
     saveCurrentSubTabState();
     currentSubTab = key;
@@ -154,38 +192,40 @@ function loadSubTabState(key) {
 
     const isInlineElement = (key === 'bold' || key === 'italic');
 
-    // 1. Radio-Buttons im HTML synchronisieren mit den Daten des aktuellen Tabs
+    // 1. Radio-Buttons synchronisieren
     const isAdvancedOn = !!data.isAdvanced;
     const targetRadio = document.getElementById(isAdvancedOn ? 'advanced-on' : 'advanced-off');
     if (targetRadio) targetRadio.checked = true;
 
-    // 2. Paragraph-Einstellungen bei Inline-Elementen verstecken
-    if (paragraphSettings) {
-        paragraphSettings.classList.toggle('hidden', isInlineElement);
-    }
+    // 2. Sichtbarkeiten der Bereiche
+    if (paragraphSettings) paragraphSettings.classList.toggle('hidden', isInlineElement);
+    if (advancedToggleSection) advancedToggleSection.classList.toggle('hidden', !isInlineElement);
 
-    // 3. Settings-Schalter NUR bei Bold & Italic anzeigen
-    if (advancedToggleSection) {
-        advancedToggleSection.classList.toggle('hidden', !isInlineElement);
-    }
-
-    // 4. Sichtbarkeit der erweiterten Felder steuern
     const showAdvanced = !isInlineElement || isAdvancedOn;
     if (advancedMetrics) advancedMetrics.classList.toggle('hidden', !showAdvanced);
     if (advancedTransform) advancedTransform.classList.toggle('hidden', !showAdvanced);
 
-    // 5. Schriftart-Dropdown steuern
+    // 3. Schriftart-Dropdown einstellen
+    const effectiveFontKey = (data.font === 'inherit') ? elementStyles.body.font : data.font;
     if (isInlineElement && !isAdvancedOn) {
         fontSelect.disabled = true;
         fontSelect.value = elementStyles.body.font;
     } else {
         fontSelect.disabled = false;
-        fontSelect.value = (data.font === 'inherit') ? elementStyles.body.font : data.font;
+        fontSelect.value = effectiveFontKey;
     }
 
-    fontSelect.dispatchEvent(new Event('change'));
+    // ACHTUNG: Kein dispatchEvent mehr! Stattdessen direkt aufrufen:
+    updateFontStyleDropdown(effectiveFontKey);
+    updateAxisInputs();
 
-    // Beim Befüllen der Textfelder:
+    // 4. Schriftschnitt auswählen
+    const font = fontConfig[effectiveFontKey] || fontConfig['arial'];
+    const availableStyles = font.styles || ALL_4_STYLES;
+    const styleIdx = (data.styleIndex !== undefined && availableStyles[data.styleIndex]) ? data.styleIndex : 0;
+    fontStyleSelect.value = styleIdx;
+
+    // 5. Textfelder befüllen
     fontSizeInput.value = (data.fontSize === 'inherit') ? elementStyles.body.fontSize : data.fontSize;
     lineHeightInput.value = (data.lineHeight === 'inherit') ? elementStyles.body.lineHeight : data.lineHeight;
     letterSpacingInput.value = (data.letterSpacing === 'inherit') ? elementStyles.body.letterSpacing : data.letterSpacing;
@@ -193,12 +233,6 @@ function loadSubTabState(key) {
     marginRightInput.value = data.marginRight;
     translateXInput.value = (data.translateX === 'inherit') ? elementStyles.body.translateX : data.translateX;
     translateYInput.value = (data.translateY === 'inherit') ? elementStyles.body.translateY : data.translateY;
-
-
-    const styleIndex = standardFontStyles.findIndex(
-    s => s.weight === (data.fontWeight || '400') && s.style === (data.fontStyle || 'normal')
-    );
-    fontStyleSelect.value = styleIndex >= 0 ? styleIndex : 0;
 
     const radioToSelect = document.querySelector(`input[name="alignment"][value="${data.alignment}"]`);
     if (radioToSelect) radioToSelect.checked = true;
@@ -209,7 +243,7 @@ function loadSubTabState(key) {
         if (axisInput) axisInput.value = data.axes[axisId];
     });
 
-    // Visuelles Feedback für aktiven Button
+    // Sub-Tab-Button hervorheben
     Object.keys(subTabButtons).forEach(btnKey => {
         if (subTabButtons[btnKey]) {
             subTabButtons[btnKey].classList.toggle('active', btnKey === key);
@@ -305,133 +339,207 @@ function applyZoom(rawValue) {
 const fontConfig = {
     "arial": {
         name: "Arial",
-        cssValue: "Arial, sans-serif"
-    },
-    "baskerville": {
-        name: "Baskerville",
-        cssValue: "Baskerville, serif"
-    },
-    "centurygothic": {
-        name: "Century Gothic",
-        cssValue: "'Century Gothic', sans-serif"
-    },
-    "couriernew": {
-        name: "Courier New",
-        cssValue: "'Courier New', Courier, monospace"
-    },
-    "garamond": {
-        name: "Garamond",
-        cssValue: "Garamond, serif"
-    },
-    "georgia": {
-        name: "Georgia",
-        cssValue: "'Georgia', serif"
-    },
-    "impact": {
-        name: "Impact",
-        cssValue: "Impact, sans-serif"
-    },
-    "palatino": {
-        name: "Palatino",
-        cssValue: "Palatino, 'Palatino Linotype', serif"
-    },
-    "times": {
-        name: "Times New Roman",
-        cssValue: "'Times New Roman', serif"
-    },
-    "trebuchetms": {
-        name: "Trebuchet MS",
-        cssValue: "'Trebuchet MS', sans-serif"
+        cssValue: 'Arial, "Helvetica Neue", Helvetica, sans-serif',
+        styles: ALL_4_STYLES
     },
     "verdana": {
         name: "Verdana",
-        cssValue: "Verdana, sans-serif"
+        cssValue: 'Verdana, Geneva, sans-serif',
+        styles: ALL_4_STYLES
     },
-    "licht": {
-        name: "Licht",
-        cssValue: "Licht, sans-serif",
-        url: "assets/fonts/00_Licht_Pino_0_0VF.ttf"
+    "trebuchetms": {
+        name: "Trebuchet MS",
+        cssValue: '"Trebuchet MS", "Lucida Sans Unicode", sans-serif',
+        styles: ALL_4_STYLES
     },
-    "opak": {
-        name: "Opak",
-        cssValue: "Opak, sans-serif",
-        url: "assets/fonts/00_MattiSiemoneit_Opak_500VF.ttf"
+    "centurygothic": {
+        name: "Century Gothic",
+        cssValue: '"Century Gothic", Futura, sans-serif',
+        styles: ALL_4_STYLES
     },
-    "scan": {
-        name: "Scan",
-        cssValue: "Scan, sans-serif",
-        url: "assets/fonts/00_kristinesørensen_Scan_200VF.ttf"
+    "times": {
+        name: "Times New Roman",
+        cssValue: '"Times New Roman", Times, serif',
+        styles: ALL_4_STYLES
     },
-    "unrial": {
-        name: "Unrial",
-        cssValue: "Unrial, sans-serif",
-        url: "assets/fonts/00_RoiBetzalel_Unrial.ttf"
+    "georgia": {
+        name: "Georgia",
+        cssValue: 'Georgia, Cambria, serif',
+        styles: ALL_4_STYLES
     },
+    "garamond": {
+        name: "Garamond",
+        cssValue: 'Garamond, "Baskerville Old Face", serif',
+        styles: ALL_4_STYLES
+    },
+    "baskerville": {
+        name: "Baskerville",
+        cssValue: 'Baskerville, "Palatino Linotype", Palatino, serif',
+        styles: ALL_4_STYLES
+    },
+    "couriernew": {
+        name: "Courier New",
+        cssValue: '"Courier New", Courier, monospace',
+        styles: ALL_4_STYLES
+    },
+    "impact": {
+        name: "Impact",
+        cssValue: 'Impact, "Arial Black", sans-serif',
+        styles: REGULAR_ONLY
+    },
+
+    "fraunces": {
+        name: "Fraunces",
+        cssValue: 'Fraunces, sans-serif',
+        styles: NO_BOLD,
+        url: "assets/fonts/Fraunces[SOFT,WONK,opsz,wght].ttf"
+    },
+
+
     "googlesansflex": {
         name: "Google Sans Flex",
-        cssValue: "'GoogleSansFlex', serif",
+        cssValue: 'GoogleSansFlex, sans-serif',
+        styles: REGULAR_ONLY,
         url: "assets/fonts/GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf"
+
     },
-    "digitaluhr": {
-        name: "Digitaluhr",
-        cssValue: "Digitaluhr, sans-serif",
-        url: "assets/fonts/DigitalUhr6VF.ttf"
+
+     "robotoflex": {
+        name: "Roboto Flex",
+        cssValue: 'RobotoFlex, sans-serif',
+        styles: REGULAR_ONLY,
+        url: "assets/fonts/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].ttf"
     },
-    "shapeshifter": {
-        name: "ShapeShifter",
-        cssValue: "ShapeShifter, sans-serif",
-        url: "assets/fonts/ShapeShifter_2Termin_1Übung_2VF.ttf"
+
+    "robotserif": {
+        name: "Roboto Serif",
+        cssValue: 'RobotoSerif, sans-serif',
+        styles: NO_BOLD,
+        url: "assets/fonts/RobotoSerif[grad,opsz,wdth,wgth].ttf"
     },
-    "decovar": {
-        name: "Decovar",
-        cssValue: "'Decovar', serif",
-        url: "assets/fonts/DecovarAlpha-VF.ttf"
+
+     "sciencegothic": {
+        name: "Science Gothic",
+        cssValue: 'ScienceGothic, sans-serif',
+        styles: REGULAR_ONLY,
+        url: "assets/fonts/ScienceGothic-VariableFont_CTRS,slnt,wdth,wght.ttf"
     },
+
+    "sono": {
+        name: "Sono",
+        cssValue: 'Sono, sans-serif',
+        styles: REGULAR_ONLY,
+        url: "assets/fonts/Sono[MONO,wght].ttf"
+    },
+
+    "sprat": {
+        name: "Sprat",
+        cssValue: 'Sprat, sans-serif',
+        styles: REGULAR_ONLY,
+        url: "assets/fonts/SpratVF.ttf"
+    },
+
+    "tilt": {
+    name: "Tilt",
+    cssValue: "'Tilt Neon', sans-serif", // NEU: Sicherer Fallback für das Haupt-Objekt
+    styles: [
+        { 
+            label: 'Neon', 
+            weight: '400', 
+            style: 'normal', 
+            cssValue: "'Tilt Neon', sans-serif",
+            url: "assets/fonts/TiltNeon[HROT,VROT].ttf"
+        },
+        { 
+            label: 'Prism',  
+            weight: '400', 
+            style: 'normal', 
+            cssValue: "'Tilt Prism', sans-serif",
+            url: "assets/fonts/TiltPrism[HROT,VROT].ttf"
+        },
+        { 
+            label: 'Warp',  
+            weight: '400', 
+            style: 'normal', 
+            cssValue: "'Tilt Warp', sans-serif",
+            url: "assets/fonts/TiltWarp[HROT,VROT].ttf"
+        }
+    ]
+},
+
+    "tiny": {
+        name: "Tiny",
+        cssValue: 'tiny, sans-serif',
+        styles: REGULAR_ONLY
+    }
+
 };
 
 // 2. DER AUTOMATISCHE ACHSEN-SCANNER
+// In main.js -> autoDetectLocalAxes()
+
 async function autoDetectLocalAxes() {
     for (const key in fontConfig) {
         const font = fontConfig[key];
-        
-        if (font.url) {
-            try {
-                const response = await fetch(font.url);
-                const arrayBuffer = await response.arrayBuffer();
-                
-                const parsedFont = opentype.parse(arrayBuffer);
-                font.axes = [];
+        const stylesToScan = font.styles || [];
 
-                if (parsedFont.tables && parsedFont.tables.fvar && parsedFont.tables.fvar.axes) {
-                    parsedFont.tables.fvar.axes.forEach(axis => {
-                        font.axes.push({
-                            id: axis.tag,
-                            label: `${axis.tag} (${axis.minValue} bis ${axis.maxValue})`,
-                            default: String(axis.defaultValue),
-                            maxValue: axis.maxValue
-                        });
-                    });
-                }
-                console.log(`✓ Achsen für ${font.name} erfolgreich gescannt:`, font.axes);
-            } catch (err) {
-                console.error(`Fehler beim Scannen von ${font.name} unter ${font.url}:`, err);
-                font.axes = [];
-            }
-        } else {
-            font.axes = [];
+        // 1. Falls die Schrift eine globale URL hat (Einzeldatei-VF)
+        if (font.url) {
+            font.axes = await scanSingleFontFile(font.url, font.name);
         }
+
+        // 2. Falls einzelne Schriftschnitte eigene URLs haben (Mehrdateien-VF)
+        for (const styleObj of stylesToScan) {
+            if (styleObj.url) {
+                styleObj.axes = await scanSingleFontFile(styleObj.url, `${font.name} (${styleObj.label})`);
+            }
+        }
+    }
+}
+
+// Kleine Hilfsfunktion zum Auslesen einer Datei per opentype.js
+async function scanSingleFontFile(url, fontLabel) {
+    try {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        const parsedFont = opentype.parse(arrayBuffer);
+        const detectedAxes = [];
+
+        if (parsedFont.tables && parsedFont.tables.fvar && parsedFont.tables.fvar.axes) {
+            parsedFont.tables.fvar.axes.forEach(axis => {
+                detectedAxes.push({
+                    id: axis.tag,
+                    label: `${axis.tag} (${axis.minValue} bis ${axis.maxValue})`,
+                    default: String(axis.defaultValue),
+                    maxValue: axis.maxValue
+                });
+            });
+        }
+        console.log(`✓ Achsen für ${fontLabel} gescannt:`, detectedAxes);
+        return detectedAxes;
+    } catch (err) {
+        console.error(`Fehler beim Scannen von ${fontLabel} unter ${url}:`, err);
+        return [];
     }
 }
 
 // 3. DROPDOWN INITIALISIEREN
 function initFontDropdown() {
     fontSelect.innerHTML = '';
+    
+    // 1. Alle regulären Schriften aus fontConfig einfügen
     for (const key in fontConfig) {
         const option = document.createElement('option');
         option.value = key;
         option.textContent = fontConfig[key].name;
         fontSelect.appendChild(option);
     }
+
+    // 2. Trennlinie oder spezielle Upload-Option hinzufügen
+    const uploadOption = document.createElement('option');
+    uploadOption.value = '__upload__';
+    uploadOption.textContent = '[+] Upload font';
+    fontSelect.appendChild(uploadOption);
 }
 
 function initFontSizeDropdown() {
@@ -459,19 +567,107 @@ function initFontSizeDropdown() {
     });
 }
 
+async function handleCustomFontUpload(file) {
+    if (!file) return;
+
+    try {
+        // 1. Datei als ArrayBuffer einlesen für opentype.js
+        const arrayBuffer = await file.arrayBuffer();
+        const parsedFont = opentype.parse(arrayBuffer);
+
+        // 2. Schriftnamen aus den Metadaten auslesen (oder Dateinamen als Fallback)
+        let fontName = file.name.replace(/\.[^/.]+$/, ""); // Dateiname ohne Endung
+        if (parsedFont.names && parsedFont.names.fontFamily) {
+            fontName = parsedFont.names.fontFamily.en || fontName;
+        }
+
+        const customKey = `custom_${Date.now()}`;
+        const blobUrl = URL.createObjectURL(file);
+
+        // 3. Achsen automatisch aus opentype.js extrahieren
+        const detectedAxes = [];
+        if (parsedFont.tables && parsedFont.tables.fvar && parsedFont.tables.fvar.axes) {
+            parsedFont.tables.fvar.axes.forEach(axis => {
+                detectedAxes.push({
+                    id: axis.tag,
+                    label: `${axis.tag} (${axis.minValue} bis ${axis.maxValue})`,
+                    default: String(axis.defaultValue),
+                    maxValue: axis.maxValue
+                });
+            });
+        }
+
+        // 4. Dynamischen @font-face Style-Tag im Head verankern
+        const fontFaceStyle = document.createElement('style');
+        fontFaceStyle.textContent = `
+            @font-face {
+                font-family: '${fontName}';
+                src: url('${blobUrl}');
+                font-weight: 100 900;
+                font-style: normal;
+            }
+        `;
+        document.head.appendChild(fontFaceStyle);
+
+        // 5. Neue Schrift in fontConfig eintragen
+        fontConfig[customKey] = {
+            name: `${fontName}`,
+            cssValue: `'${fontName}', sans-serif`,
+            axes: detectedAxes,
+            styles: [
+                {
+                    label: 'Regular',
+                    weight: '400',
+                    style: 'normal',
+                    cssValue: `'${fontName}', sans-serif`,
+                    url: blobUrl,
+                    axes: detectedAxes
+                }
+            ]
+        };
+
+        // 6. Dropdown aktualisieren & die neue Schrift sofort auswählen
+        initFontDropdown();
+        fontSelect.value = customKey;
+        
+        // 7. UI-Zustand updaten und neu rendern
+        updateAxisInputs();
+        updateFontStyleDropdown(customKey);
+        saveCurrentSubTabState();
+        triggerBookRender();
+
+        console.log(`✓ Custom Font "${fontName}" erfolgreich geladen!`, fontConfig[customKey]);
+
+    } catch (err) {
+        console.error('Fehler beim Laden der Schriftdatei:', err);
+        alert('Die Schriftdatei konnte nicht gelesen werden. Bitte eine gültige .ttf oder .otf Datei wählen.');
+        fontSelect.value = previousFontKey;
+    }
+}
+
 // 4. GENERATOR: Baut die Achsen-Inputs live im HTML
 function updateAxisInputs() {
     const selectedKey = fontSelect.value;
     const font = fontConfig[selectedKey];
-    
-    axesContainer.innerHTML = '';
+    if (!font) return;
 
-    const hasAxes = font && font.axes && font.axes.length > 0;
+    const availableStyles = font.styles || ALL_4_STYLES;
+    
+    // Den aktuell gewählten Schnitt aus dem Dropdown ermitteln
+    const selectedStyleIndex = fontStyleSelect.value || 0;
+    const currentStyleObj = availableStyles[selectedStyleIndex] || availableStyles[0];
+
+    // Achsen ermitteln: Entweder vom speziellen Schnitt ODER von der Hauptschrift
+    const activeAxes = (currentStyleObj && currentStyleObj.axes) ? currentStyleObj.axes : (font.axes || []);
+
+    axesContainer.innerHTML = '';
+    const hasAxes = activeAxes.length > 0;
     variableSettings.classList.toggle('hidden', !hasAxes);
 
     if (!hasAxes) return;
 
-    font.axes.forEach(axis => {
+    // Regler für die aktiven Achsen bauen
+    activeAxes.forEach(axis => {
         const containerDiv = document.createElement('div');
 
         const p = document.createElement('p');
@@ -520,6 +716,19 @@ function updateAxisInputs() {
     });
 }
 
+function updateFontStyleDropdown(fontKey) {
+    const font = fontConfig[fontKey] || fontConfig['arial'];
+    const availableStyles = font.styles || ALL_4_STYLES;
+
+    fontStyleSelect.innerHTML = '';
+    availableStyles.forEach((item, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = item.label;
+        fontStyleSelect.appendChild(option);
+    });
+}
+
 // In main.js -> Funktion applyDynamicStyles()
 function applyDynamicStyles() {
     saveCurrentSubTabState();
@@ -536,41 +745,58 @@ function applyDynamicStyles() {
         .word { display: inline-block !important; }
     `;
 
+
+
     Object.keys(elementStyles).forEach(key => {
-        const style = elementStyles[key];
-        const selector = selectorMap[key];
+    const style = elementStyles[key];
+    const selector = selectorMap[key];
 
-        const effectiveFontKey = (style.font === 'inherit') ? elementStyles.body.font : style.font;
-        const font = fontConfig[effectiveFontKey] || fontConfig['arial'];
+    // 1. Schriftart-Objekt holen
+    const effectiveFontKey = (style.font === 'inherit') ? elementStyles.body.font : style.font;
+    const font = fontConfig[effectiveFontKey] || fontConfig['arial'];
+    const availableStyles = font.styles || ALL_4_STYLES;
 
-        const effectiveFontSize = (style.fontSize === 'inherit') ? elementStyles.body.fontSize : style.fontSize;
-        const effectiveLineHeight = (style.lineHeight === 'inherit') ? elementStyles.body.lineHeight : style.lineHeight;
-        const effectiveLetterSpacing = (style.letterSpacing === 'inherit') ? elementStyles.body.letterSpacing : style.letterSpacing;
+    // 2. Aktiven Schnitt über den gespeicherten Index holen (Fallback auf Index 0)
+    const styleIdx = (style.styleIndex !== undefined && availableStyles[style.styleIndex]) 
+        ? style.styleIndex 
+        : 0;
+    const currentStyleObj = availableStyles[styleIdx] || availableStyles[0];
 
-        const effectiveTx = (style.translateX === 'inherit') ? elementStyles.body.translateX : style.translateX;
-        const effectiveTy = (style.translateY === 'inherit') ? elementStyles.body.translateY : style.translateY;
+    // 3. Schriftfamilie ermitteln (Schnitt-CSS -> Haupt-CSS -> Fallback-String)
+    const finalFontFamily = (currentStyleObj && currentStyleObj.cssValue) 
+        ? currentStyleObj.cssValue 
+        : (font.cssValue || 'sans-serif');
 
-        const tx = (effectiveTx || '0px').trim();
-        const ty = (effectiveTy || '0px').trim();
+    // 4. Transformationen & Metriken auflösen
+    const effectiveFontSize = (style.fontSize === 'inherit') ? elementStyles.body.fontSize : style.fontSize;
+    const effectiveLineHeight = (style.lineHeight === 'inherit') ? elementStyles.body.lineHeight : style.lineHeight;
+    const effectiveLetterSpacing = (style.letterSpacing === 'inherit') ? elementStyles.body.letterSpacing : style.letterSpacing;
 
-        // Variable Font Rules aufbauen
-        let fontVariationRules = 'font-variation-settings: normal !important;';
-        if (style.axes && Object.keys(style.axes).length > 0) {
-            const axesRules = Object.keys(style.axes)
-                .filter(axisId => style.axes[axisId].trim() !== '')
-                .map(axisId => `'${axisId}' calc(${style.axes[axisId]})`);
-            if (axesRules.length > 0) {
-                fontVariationRules = `font-variation-settings: ${axesRules.join(', ')} !important;`;
-            }
+    const effectiveTx = (style.translateX === 'inherit') ? elementStyles.body.translateX : style.translateX;
+    const effectiveTy = (style.translateY === 'inherit') ? elementStyles.body.translateY : style.translateY;
+
+    const tx = (effectiveTx || '0px').trim();
+    const ty = (effectiveTy || '0px').trim();
+
+    // 5. Achsen (Variable Fonts) für den aktiven Schnitt auflösen
+    let fontVariationRules = 'font-variation-settings: normal !important;';
+    if (style.axes && Object.keys(style.axes).length > 0) {
+        const axesRules = Object.keys(style.axes)
+            .filter(axisId => style.axes[axisId].trim() !== '')
+            .map(axisId => `'${axisId}' calc(${style.axes[axisId]})`);
+        if (axesRules.length > 0) {
+            fontVariationRules = `font-variation-settings: ${axesRules.join(', ')} !important;`;
         }
+    }
 
-        generatedCss += `
+    // CSS Block zusammenbauen
+    generatedCss += `
     .pagedjs_area ${selector} {
         text-align: ${style.alignment} !important;
         padding-left: calc(${style.marginLeft}) !important;
         padding-right: calc(${style.marginRight}) !important;
         box-sizing: border-box !important;
-        font-family: ${font.cssValue} !important;
+        font-family: ${finalFontFamily} !important;
         font-weight: ${style.fontWeight || '400'} !important;
         font-style: ${style.fontStyle || 'normal'} !important;
         font-size: calc(${effectiveFontSize}) !important;
@@ -580,7 +806,7 @@ function applyDynamicStyles() {
     .pagedjs_area ${selector} .char {
         display: inline-block !important;
         transform: translate(calc(${tx}), calc(${ty})) !important;
-        font-family: ${font.cssValue} !important;
+        font-family: ${finalFontFamily} !important;
         font-weight: ${style.fontWeight || '400'} !important;
         font-style: ${style.fontStyle || 'normal'} !important;
         font-size: calc(${effectiveFontSize}) !important;
@@ -588,7 +814,7 @@ function applyDynamicStyles() {
         ${fontVariationRules}
     }
     `;
-    });
+});
 
     dynamicEffectsStyle.textContent = generatedCss;
 }
@@ -702,31 +928,74 @@ function triggerBookRender() {
 }
 
 // 7. LISTENERS
-editor.addEventListener('input', triggerBookRender);
-fontSizeInput.addEventListener('input', triggerBookRender);
-lineHeightInput.addEventListener('input', triggerBookRender);
-letterSpacingInput.addEventListener('input', triggerBookRender);
-marginLeftInput.addEventListener('input', triggerBookRender);
-marginRightInput.addEventListener('input', triggerBookRender);
-pageMarginTopInput.addEventListener('input', triggerBookRender);
-pageMarginBottomInput.addEventListener('input', triggerBookRender);
-pageMarginLeftInput.addEventListener('input', triggerBookRender);
-pageMarginRightInput.addEventListener('input', triggerBookRender);
-translateXInput.addEventListener('input', applyDynamicStyles);
-translateYInput.addEventListener('input', applyDynamicStyles);
+// --- 1. LIVE-RENDERING (Bei jedem Tastenschlag) ---
 
-[fontSizeInput, lineHeightInput, letterSpacingInput, marginLeftInput, marginRightInput, translateXInput, translateYInput].forEach(input => {
+// Fließtext-Editor
+if (editor) {
+    editor.addEventListener('input', triggerBookRender);
+}
+
+// Die 6 Ränder-Textfelder
+Object.values(marginInputs).forEach(input => {
+    if (input) {
+        input.addEventListener('input', triggerBookRender);
+    }
+});
+
+
+// --- 2. VERZÖGERTES RENDERING (Nur bei Enter oder Blur) ---
+
+const handleSettingCommit = () => {
+    saveCurrentSubTabState();
+    triggerBookRender();
+};
+
+// Alle Einstellungs-Textfelder für Schrift, Absätze & Seiten
+const settingInputs = [
+    fontSizeInput, lineHeightInput, letterSpacingInput,
+    marginLeftInput, marginRightInput, translateXInput, translateYInput,
+    pageHeightInput, pageWidthInput,
+    pageMarginTopInput, pageMarginBottomInput, pageMarginLeftInput, pageMarginRightInput
+];
+
+settingInputs.forEach(input => {
+    attachCommitListener(input, handleSettingCommit);
+});
+
+// Wenn manuell in Seitenbreite/-höhe getippt wird, Dropdown auf "Custom" stellen
+[pageWidthInput, pageHeightInput].forEach(input => {
     if (input) {
         input.addEventListener('input', () => {
-            saveCurrentSubTabState();
-            triggerBookRender();
+            pagePresetSelect.value = "-1";
         });
     }
 });
 
+
 fontSelect.addEventListener('change', () => {
-    updateAxisInputs();
-    triggerBookRender();
+    if (fontSelect.value === '__upload__') {
+        // Öffnet den System-Dateidialog
+        fontUploadInput.click();
+    } else {
+        // Normaler Schriftwechsel: Vorherigen Key merken
+        previousFontKey = fontSelect.value;
+        updateAxisInputs();
+        updateFontStyleDropdown(fontSelect.value);
+        saveCurrentSubTabState();
+        triggerBookRender();
+    }
+});
+
+fontUploadInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        handleCustomFontUpload(file);
+    } else {
+        // Falls der Nutzer im Dateidialog auf "Abbrechen" klickt
+        fontSelect.value = previousFontKey;
+    }
+    // Reset, damit dieselbe Datei bei Bedarf erneut gewählt werden kann
+    fontUploadInput.value = '';
 });
 
 alignmentRadios.forEach(radio => {
@@ -765,6 +1034,16 @@ advancedRadios.forEach(radio => {
         loadSubTabState(currentSubTab);
         triggerBookRender();
     });
+});
+
+fontSelect.addEventListener('change', () => {
+    updateAxisInputs();
+    
+    // Schriftschnitte für die neu gewählte Schriftart aufbauen
+    updateFontStyleDropdown(fontSelect.value);
+    
+    saveCurrentSubTabState();
+    triggerBookRender();
 });
 
 

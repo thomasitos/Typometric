@@ -12,46 +12,84 @@
 
 
 @font-face {
-  font-family: Scan;
-  src: url('../fonts/00_kristinesørensen_Scan_200VF.ttf') format("truetype");
-  font-style: normal;
-}
-
-@font-face {
-  font-family: Licht;
-  src: url('../fonts/00_Licht_Pino_0_0VF.ttf') format("truetype");
-  font-style: normal;
-}
-
-@font-face {
-  font-family: Opak;
-  src: url('../fonts/00_MattiSiemoneit_Opak_500VF.ttf') format("truetype");
-  font-style: normal;
-}
-
-@font-face {
-  font-family: Unrial;
-  src: url('../fonts/00_RoiBetzalel_Unrial.ttf') format("truetype");
-  font-style: normal;
-}
-
-@font-face {
-  font-family: Decovar;
-  src: url('../fonts/DecovarAlpha-VF.ttf') format("truetype");
-  font-style: normal;
-}
-
-
-@font-face {
   font-family: ShapeShifter;
   src: url('../fonts/ShapeShifter_2Termin_1Übung_2VF.ttf') format("truetype");
   font-style: normal;
 }
 
+@font-face {
+  font-family: Fraunces;
+  src: url('../fonts/Fraunces-Italic[SOFT,WONK,opsz,wght].ttf') format("truetype");
+  font-style: italic;
+}
 
 @font-face {
-  font-family: Digitaluhr;
-  src: url('../fonts/DigitalUhr6VF.ttf') format("truetype");
+  font-family: Fraunces;
+  src: url('../fonts/Fraunces[SOFT,WONK,opsz,wght].ttf') format("truetype");
   font-style: normal;
 }
+
+@font-face {
+  font-family: RobotoFlex;
+  src: url('../fonts/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].ttf') format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: RobotoSerif;
+  src: url('../fonts/RobotoSerif-Italic[grad,opsz,wdth,wgth].ttf') format("truetype");
+  font-style: italic;
+}
+
+@font-face {
+  font-family: RobotoSerif;
+  src: url('../fonts/RobotoSerif[grad,opsz,wdth,wgth].ttf') format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: ScienceGothic;
+  src: url('../fonts/ScienceGothic-VariableFont_CTRS,slnt,wdth,wght.ttf') format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Sono;
+  src: url('../fonts/Sono[MONO,wght].ttf') format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Sprat;
+  src: url('../fonts/SpratVF.ttf') format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Tilt Neon';
+  src: url('../fonts/TiltNeon[HROT,VROT].ttf') format("truetype");
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Tilt Prism';
+  src: url('../fonts/TiltPrism[HROT,VROT].ttf') format("truetype");
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Tilt Warp';
+  src: url('../fonts/TiltWarp[HROT,VROT].ttf') format("truetype");
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: Tiny;
+  src: url('../fonts/TINY5x3GX.ttf') format("truetype");
+  font-style: normal;
+}
+
 
