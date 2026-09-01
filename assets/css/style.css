@@ -12,7 +12,7 @@
   /* Typography */
   --font-ui: "Inter", sans-serif;
   --font-editor: "Datatype", monospace;
-  --font-serif: "Times New Roman", serif;
+  --font-serif: "Garamond EB", serif;
 
   /* Dimensions & Layout */
   --statusbar-height: 60px;
@@ -205,6 +205,12 @@ textarea {
   overflow-y: auto;
 }
 
+.four-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
 /* Sidebar Navigation Inside Panels */
 .sidebar {
   display: flex;
@@ -227,10 +233,6 @@ textarea {
   overflow-y: auto;
 }
 
-#book-canvas .pagedjs_pages {
-  zoom: var(--preview-zoom, 100%);
-  margin: 0 auto;
-}
 
 .pagedjs_sheet {
   border: var(--border-thin);
@@ -323,6 +325,12 @@ button {
   z-index: 9999;
 }
 
+#status-bar-name {
+  display: flex;
+  align-items: baseline;
+  gap: 8px
+}
+
 #zoom-control {
   display: flex;
   flex-direction: row;
@@ -344,6 +352,61 @@ button {
 
 .hidden {
   display: none !important;
+}
+
+
+/* ==========================================
+   DOPPELSEITEN (FACING PAGES) PREVIEW OVERRIDES
+   ========================================== */
+
+/* Container für das Canvas muss Scrollen erlauben */
+#right-side {
+    overflow: auto !important;
+}
+
+#book-canvas {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+#book-canvas .pagedjs_pages {
+    zoom: var(--preview-zoom, 100%);
+    margin: 0 auto;
+}
+
+/* KORREKTUR: flex-direction auf row & margin-bottom zwingend überschreiben */
+#book-canvas.facing-pages-mode .pagedjs_pages {
+    display: flex !important;
+    flex-direction: row !important; /* <--- Zwingt Flexbox horizontal zu arbeiten */
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    row-gap: 30px !important;
+    width: calc(var(--page-width-val, 148mm) * 2 + 10mm) !important; /* Exakt 2 Seiten breit */
+    margin: 0 auto !important;
+}
+
+/* Abstände auf der Doppelseite entfernen */
+#book-canvas.facing-pages-mode .pagedjs_page {
+    margin: 0 !important;
+    margin-bottom: 0 !important; /* Löscht die 30px aus page.css */
+    flex-shrink: 0 !important;
+}
+
+/* Erste Seite schiebt sich um genau 1 Seite nach rechts (Recto) */
+#book-canvas.facing-pages-mode .pagedjs_first_page,
+#book-canvas.facing-pages-mode .pagedjs_page_1 {
+    margin-left: calc(var(--page-width-val, 148mm)) !important;
+}
+
+/* Buchfalz-Schatten in der Mitte */
+#book-canvas.facing-pages-mode .pagedjs_left_page {
+    box-shadow: -5px 5px 15px rgba(0,0,0,0.08), inset -4px 0 6px -3px rgba(0,0,0,0.2) !important;
+}
+
+#book-canvas.facing-pages-mode .pagedjs_right_page {
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.08), inset 4px 0 6px -3px rgba(0,0,0,0.2) !important;
 }
 
 /* ==========================================================================
@@ -384,3 +447,5 @@ button {
     transform: none !important;
   }
 }
+
+

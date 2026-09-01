@@ -45,3 +45,12 @@
   break-before: page !important;
   page-break-before: always !important;
 }
+
+.pagedjs_area .word {
+    display: inline !important;
+    white-space: nowrap !important;
+}
+
+.pagedjs_area .char {
+    display: inline-block !important;
+}

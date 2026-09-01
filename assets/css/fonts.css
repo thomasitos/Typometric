@@ -1,4 +1,18 @@
 @font-face {
+  font-family: Garamond EB;
+  src: url('../fonts/EBGaramond-VariableFont_wght.ttf') format("truetype");
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: Garamond EB;
+  src: url('../fonts/EBGaramond-Italic-VariableFont_wght.ttf') format("truetype");
+  font-style: italic;
+  font-weight: 400;
+}
+
+@font-face {
   font-family: GoogleSansFlex;
   src: url('../fonts/GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf') format("truetype");
   font-style: normal;
@@ -91,5 +105,3 @@
   src: url('../fonts/TINY5x3GX.ttf') format("truetype");
   font-style: normal;
 }
-
-

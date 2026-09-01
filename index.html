@@ -28,125 +28,129 @@
     <script src="assets/js/vendor/paged.polyfill.js"></script>
 
     <!-- index.html (im <head> Tag) -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
-</head>
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-<body>
-    <div id="left-side">
-        <div id="left-side-ui">
-            <div id="text-editor">
-                <div class="sidebar">
-                    <div>
+    </head>
+
+    <body>
+        <div id="left-side">
+            <div id="left-side-ui">
+                <div id="text-editor">
+                    <div class="sidebar">
                         <div>
-                            <button class="sidebar-button active" id="btn-text">
-                            <p>Text</p>
-                            </button>
+                            <div>
+                                <button class="sidebar-button active" id="btn-text">
+                                    <p>Text</p>
+                                </button>
+                            </div>
+                            <div>
+                                <button class="sidebar-button" id="btn-margins">
+                                    <p>Margins</p>
+                                </button>
+                            </div>
                         </div>
                         <div>
-                            <button class="sidebar-button" id="btn-margins">
-                            <p>Margins</p>
-                            </button>
+                            <div>
+                                <button class="sidebar-button" id="btn-new-page">
+                                    <p>New Page</p>
+                                </button>
+                            </div>
+                            <div>
+                                <button id="btn-export-pdf-1" class="sidebar-button">
+                                    <p>Export PDF</p>
+                                </button>        
+                            </div>
                         </div>
                     </div>
-                    <div>
+                    <div id=text-editor-textarea>
+                        <textarea id="editor" autocomplete="off" placeholder="Write your text here..." value=""></textarea>
+                    </div>
+                    <div id="margin-editor-textarea" class="hidden">
+                        <textarea id="margin-editor-top-left" autocomplete="off" placeholder="Edit top left"></textarea>
+                        <textarea id="margin-editor-top-center" autocomplete="off" placeholder="Edit top center"></textarea>
+                        <textarea id="margin-editor-top-right" autocomplete="off" placeholder="Edit top right"></textarea>
+                        <textarea id="margin-editor-bottom-left" autocomplete="off" placeholder="Edit bottom left"></textarea>
+                        <textarea id="margin-editor-bottom-center" autocomplete="off" placeholder="Edit bottom center"></textarea>
+                        <textarea id="margin-editor-bottom-right" autocomplete="off" placeholder="Edit bottom right"></textarea>
+                    </div>
+                </div>
+                <div id="styles" class="panel hidden">
+                    <div class="sidebar">
                         <div>
-                            <button class="sidebar-button" id="btn-new-page">
-                            <p>New Page</p>
+                            <button id=btn-body-settings class="sidebar-button">
+                                <p>Body</p>
+                            </button>
+                            <button id=btn-h1-settings class="sidebar-button">
+                                <p>H1</p>
+                            </button>
+                            <button id=btn-h2-settings class="sidebar-button">
+                                <p>H2</p>
+                            </button>
+                            <button id=btn-bold-settings class="sidebar-button">
+                                <p>Bold</p>
+                            </button>
+                            <button id=btn-italic-settings class="sidebar-button">
+                                <p>Italic</p>
+                            </button>
+                            <button id=btn-margins-settings class="sidebar-button">
+                                <p>Margins</p>
                             </button>
                         </div>
                         <div>
-                            <button id="btn-export-pdf-1" class="sidebar-button">
+                            <button id="btn-export-pdf-2" class="sidebar-button">
                                 <p>Export PDF</p>
                             </button>        
                         </div>
                     </div>
-                </div>
-                <div id=text-editor-textarea>
-                    <textarea id="editor" autocomplete="off" placeholder="Write your text here..." value=""></textarea>
-                </div>
-                <div id="margin-editor-textarea" class="hidden">
-                    <textarea id="margin-editor-top-left" autocomplete="off" placeholder="Edit top left"></textarea>
-                    <textarea id="margin-editor-top-center" autocomplete="off" placeholder="Edit top center"></textarea>
-                    <textarea id="margin-editor-top-right" autocomplete="off" placeholder="Edit top right"></textarea>
-                    <textarea id="margin-editor-bottom-left" autocomplete="off" placeholder="Edit bottom left"></textarea>
-                    <textarea id="margin-editor-bottom-center" autocomplete="off" placeholder="Edit bottom center"></textarea>
-                    <textarea id="margin-editor-bottom-right" autocomplete="off" placeholder="Edit bottom right"></textarea>
-                </div>
-            </div>
-            <div id="styles" class="panel hidden">
-                <div class="sidebar">
-                    <div>
-                        <button id=btn-body-settings class="sidebar-button">
-                            <p>Body</p>
-                        </button>
-                        <button id=btn-h1-settings class="sidebar-button">
-                            <p>H1</p>
-                        </button>
-                        <button id=btn-h2-settings class="sidebar-button">
-                            <p>H2</p>
-                        </button>
-                        <button id=btn-bold-settings class="sidebar-button">
-                            <p>Bold</p>
-                        </button>
-                        <button id=btn-italic-settings class="sidebar-button">
-                            <p>Italic</p>
-                        </button>
-                    </div>
-                    <div>
-                        <button id="btn-export-pdf-2" class="sidebar-button">
-                            <p>Export PDF</p>
-                        </button>        
-                    </div>
-                </div>
-                <div id=styles-settings class="panel-settings">
-                    <div>
+                    <div id=styles-settings class="panel-settings">
                         <!-- Im left-side / effects Container -->
                         <div id="effects">
-                            <h1>Typography</h1>   
-                            <!-- Schriftarten Dropdown (Werte angepasst für JS-Lookup) -->
                             <div>
-                                <p>Font</p>
-                                <div class="simple-dropdown">
-                                <select id="font-select">
+                                <h1>Typography</h1>   
+                                <!-- Schriftarten Dropdown (Werte angepasst für JS-Lookup) -->
+                                <div>
+                                    <p>Font</p>
+                                    <div class="simple-dropdown">
+                                        <select id="font-select">
 
-                                </select>
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
-                            <div>
-                                <p>Font style</p>
-                                <div class="simple-dropdown">
-                                    <select id="font-style-select">
-                                        <!-- Wird dynamisch per JS befüllt -->
-                                    </select>
+                                <div>
+                                    <p>Font style</p>
+                                    <div class="simple-dropdown">
+                                        <select id="font-style-select">
+                                            <!-- Wird dynamisch per JS befüllt -->
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
-                            <div id="advanced-metrics">
-                            <div>
-                                <p>Font size</p>
-                                <div class="formula-input-dropwdown">
-                                <input type="text" id="font-size-input" 
-                                       value="(sin(var(--char-index) * 6deg) + 2) * 8pt">
-                                <select id="font-size-select" class="formula-select"></select>
+                                <div id="advanced-metrics">
+                                    <div>
+                                        <p>Font size</p>
+                                        <div class="formula-input-dropwdown">
+                                            <input type="text" id="font-size-input" 
+                                            value="(sin(var(--char-index) * 6deg) + 2) * 8pt">
+                                            <select id="font-size-select" class="formula-select"></select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p>Line height</p>
+                                        <div class="formula-input">
+                                            <input type="text" id="line-height-input" 
+                                            value="1.0">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p>Letter spacing</p>
+                                        <div class="formula-input">
+                                            <input type="text" id="letter-spacing-input" 
+                                            value="0pt">
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div>
-                                <p>Line height</p>
-                                <div class="formula-input">
-                                <input type="text" id="line-height-input" 
-                                value="1.0">
-                                </div>
-                            </div>
-                            <div>
-                                <p>Letter spacing</p>
-                                <div class="formula-input">
-                                <input type="text" id="letter-spacing-input" 
-                                value="0pt">
-                                </div>
-                            </div>
                             </div>
                             <div id="variable-settings" class="hidden">
-                            <h1 style="margin-top: 15px">Variable Typography</h1>
+                                <h1 style="margin-top: 15px">Variable Typography</h1>
                                 <div id="axes-container"></div>
                             </div>
                             <div id="paragraph-settings">
@@ -154,151 +158,301 @@
                                 <div>
                                     <p>Alignment</p>
                                     <div class="radio-input">
-                                    <label class="btn-display">Left
-                                    <input class="btn-control" type="radio" id="alignment-left" name="alignment" value="left" checked>
-                                    </label>
-                                    <label class="btn-display">Right
-                                    <input class="btn-control" type="radio" id="alignment-right" name="alignment" value="right">
-                                    </label>
-                                    <label class="btn-display">Center
-                                    <input class="btn-control" type="radio" id="alignment-center" name="alignment" value="center">
-                                    </label>
-                                    <label class="btn-display">Justify
-                                    <input class="btn-control" type="radio" id="alignment-justify" name="alignment" value="justify">
-                                    </label>
+                                        <label class="btn-display">Left
+                                            <input class="btn-control" type="radio" id="alignment-left" name="alignment" value="left" checked>
+                                        </label>
+                                        <label class="btn-display">Right
+                                            <input class="btn-control" type="radio" id="alignment-right" name="alignment" value="right">
+                                        </label>
+                                        <label class="btn-display">Center
+                                            <input class="btn-control" type="radio" id="alignment-center" name="alignment" value="center">
+                                        </label>
+                                        <label class="btn-display">Justify
+                                            <input class="btn-control" type="radio" id="alignment-justify" name="alignment" value="justify">
+                                        </label>
                                     </div>
                                 </div>
                                 <div>
                                     <p>Margin left</p>
                                     <div class="formula-input">
-                                    <input type="text" id="margin-left-input" 
-                                    value="0mm">
+                                        <input type="text" id="margin-left-input" 
+                                        value="0mm">
                                     </div>
                                 </div>
                                 <div>
                                     <p>Margin right</p>
                                     <div class="formula-input">
-                                    <input type="text" id="margin-right-input" 
-                                    value="0mm">
+                                        <input type="text" id="margin-right-input" 
+                                        value="0mm">
                                     </div>
                                 </div>
                             </div>
                             <div id="advanced-transform">
-                            <h1 style="margin-top: 15px">Transform</h1>
-                            <div>
-                                <p>Translate X</p>
+                                <h1 style="margin-top: 15px">Transform</h1>
                                 <div>
-                                <input type="text" id="translate-x-input" value="0px">
+                                    <p>Translate X</p>
+                                    <div class="formula-input-dropwdown">
+                                        <input type="text" id="translate-x-input" value="0px">
+                                        <select id="translate-x-select" class="formula-select"></select>
+                                    </div>
                                 </div>
-                            </div>
-                            <div>
-                                <p>Translate Y</p>
                                 <div>
-                                <input type="text" id="translate-y-input" value="0px"> 
+                                    <p>Translate Y</p>
+                                    <div class="formula-input-dropwdown">
+                                        <input type="text" id="translate-y-input" value="0px">
+                                        <select id="translate-y-select" class="formula-select"></select> 
+                                    </div>
                                 </div>
-                            </div>
+                                <div>
+                                    <p>Skew X</p>
+                                    <div class="formula-input-dropwdown">
+                                        <input type="text" id="skew-x-input" value="0deg"> 
+                                        <select id="skew-x-select" class="formula-select"></select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p>Skew Y</p>
+                                    <div class="formula-input-dropwdown">
+                                        <input type="text" id="skew-y-input" value="0deg">
+                                        <select id="skew-y-select" class="formula-select"></select> 
+                                    </div>
+                                </div>
+                                <div>
+                                    <p>Rotate</p>
+                                    <div class="formula-input-dropwdown">
+                                        <input type="text" id="rotate-input" value="0deg">
+                                        <select id="rotate-select" class="formula-select"></select> 
+                                    </div>
+                                </div>
                             </div>
                             <div id="advanced-toggle-section">
-                            <h1 style="margin-top: 15px">Settings</h1>
-                            <div>
-                                <p>Advanced settings</p>
-                                <div class="radio-input">
-                                    <label class="btn-display">On
-                                        <input class="btn-control" type="radio" id="advanced-on" name="advanced-mode" value="on">
-                                    </label>
-                                    <label class="btn-display">Off
-                                        <input class="btn-control" type="radio" id="advanced-off" name="advanced-mode" value="off" checked>
-                                    </label>
+                                <h1 style="margin-top: 15px">Settings</h1>
+                                <div>
+                                    <p>Advanced settings</p>
+                                    <div class="radio-input">
+                                        <label class="btn-display">On
+                                            <input class="btn-control" type="radio" id="advanced-on" name="advanced-mode" value="on">
+                                        </label>
+                                        <label class="btn-display">Off
+                                            <input class="btn-control" type="radio" id="advanced-off" name="advanced-mode" value="off" checked>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
                         </div>                                   
                     </div>
                 </div>
-            </div>
-            <div id="pages" class="panel hidden">
-                <div class="sidebar">
-                    <div>
-                    </div>
-                    <div>
-                        <button id="btn-export-pdf-3" class="sidebar-button">
-                            <p>Export PDF</p>
-                        </button>        
-                    </div>
-                </div>
-                <div id="pages-settings" class="panel-settings">
-                    <h1>Page Size</h1>
-                    <div>
-                        <p>Presets</p>
-                        <div class="simple-dropdown">
-                        <select id="page-preset-select" class="page-preset-select"></select>
+                <div id="pages" class="panel hidden">
+                    <div class="sidebar">
+                        <div>
+                        </div>
+                        <div>
+                            <button id="btn-export-pdf-3" class="sidebar-button">
+                                <p>Export PDF</p>
+                            </button>        
                         </div>
                     </div>
-                    <div>
-                        <p>Height</p>
-                        <div class="formula-input">
-                        <input type="text" id="page-height-input" value="210mm">
+                    <div id="pages-settings" class="panel-settings">
+                        <div>
+                            <h1>Page Size</h1>
+                            <div>
+                                <p>Presets</p>
+                                <div class="simple-dropdown">
+                                    <select id="page-preset-select" class="page-preset-select"></select>
+                                </div>
+                            </div>
+                            <div>
+                                <p>Height</p>
+                                <div class="formula-input">
+                                    <input type="text" id="page-height-input" value="210mm">
+                                </div>
+                            </div>
+                            <div>
+                                <p>Width</p>
+                                <div class="formula-input">
+                                    <input type="text" id="page-width-input" value="148mm">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                                <h1 style="margin-top: 15px">Layout</h1>
+                                <div>
+                                    <p>Facing pages</p>
+                                    <div class="radio-input">
+                                    <label class="btn-display">On
+                                        <input class="btn-control" type="radio" id="facing-pages-on" name="facing-pages" value="on">
+                                    </label>
+                                    <label class="btn-display">Off
+                                        <input class="btn-control" type="radio" id="facing-pages-off" name="facing-pages" value="off" checked>
+                                    </label>
+                                    </div>
+                                </div>
+                                <div class="four-inputs">
+                                <div>
+                                    <div class="formula-input">
+                                        <p>Margin top</p>
+                                        <input type="text" id="page-margin-top-input" value="20mm">
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="formula-input">
+                                        <p>Margin bottom</p>
+                                        <input type="text" id="page-margin-bottom-input" value="20mm" style="border-left: none">
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="formula-input">
+                                        <p>Margin left</p>
+                                        <input type="text" id="page-margin-left-input" value="20mm">
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="formula-input">
+                                        <p>Margin right</p>
+                                        <input type="text" id="page-margin-right-input" value="20mm" style="border-left: none">                            
+                                    </div>
+                                </div>
+                                </div>
+                        </div>
+                        <div>
+                            <h1 style="margin-top: 15px">Print</h1>
+                            <div>
+                                    <p>Crop Marks</p>
+                                    <div class="radio-input">
+                                    <label class="btn-display">On
+                                        <input class="btn-control" type="radio" id="crop-marks-on" name="crop-marks" value="on">
+                                    </label>
+                                    <label class="btn-display">Off
+                                        <input class="btn-control" type="radio" id="crop-marks-off" name="crop-marks" value="off" checked>
+                                    </label>
+                                    </div>
+                                </div>
+                            <div class="four-inputs">
+                                <div>
+                                    <div class="formula-input">
+                                        <p>Bleed top</p>
+                                        <input type="text" id="bleed-top-input" value="0mm">
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="formula-input">
+                                        <p>Bleed bottom</p>
+                                        <input type="text" id="bleed-bottom-input" value="0mm" style="border-left: none">
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="formula-input">
+                                        <p>Bleed left</p>
+                                        <input type="text" id="bleed-left-input" value="0mm">
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="formula-input">
+                                        <p>Bleed right</p>
+                                        <input type="text" id="bleed-right-input" value="0mm" style="border-left: none">
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <p>Width</p>
-                        <div class="formula-input">
-                        <input type="text" id="page-width-input" value="148mm">
+                <div id="settings" class="panel hidden">
+                    <div class="sidebar">
+                        <div>
+                        </div>
+                        <div>
+                            <button id="btn-export-pdf-4" class="sidebar-button">
+                                <p>Export PDF</p>
+                            </button>        
                         </div>
                     </div>
-                    <h1>Margins</h1>
-                    <div>
-                        <p>Margin top</p>
-                        <div class="formula-input">
-                        <input type="text" id="page-margin-top-input" value="20mm">
+                    <div id="settings-settings" class="panel-settings">
+                        <h1>Typography</h1>
+                        <div>
+                            <p>Hyphenation</p>
+                            <div class="radio-input">
+                                <label class="btn-display">On
+                                    <input class="btn-control" type="radio" id="hyphenation-on" name="hyphenation" value="on">
+                                </label>
+                                <label class="btn-display">Off
+                                    <input class="btn-control" type="radio" id="hyphenation-off" name="hyphenation" value="off" checked>
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <p>Margin bottom<p>
-                        <div class="formula-input">
-                        <input type="text" id="page-margin-bottom-input" value="20mm">
+                        <div>
+                            <p>Language (ISO)</p>
+                            <div class="formula-input">
+                                <input type="text" id="language-input" 
+                                value="en">
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <p>Margin left<p>
-                        <div class="formula-input">
-                        <input type="text" id="page-margin-left-input" value="20mm">
+                        <h1 style="margin-top: 15px">Performance</h1>
+                        <div>
+                            <p>Rendering</p>
+                            <div class="radio-input">
+                                <label class="btn-display">Live
+                                    <input class="btn-control" type="radio" id="rendering-live" name="rendering" value="live" checked>
+                                </label>
+                                <label class="btn-display">Debounced
+                                    <input class="btn-control" type="radio" id="rendering-debounced" name="rendering" value="debounced">
+                                </label>
+                                <label class="btn-display">Manual
+                                    <input class="btn-control" type="radio" id="rendering-manual" name="rendering" value="manual">
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <p>Margin right<p>
-                        <div class="formula-input">
-                        <input type="text" id="page-margin-right-input" value="20mm">                            
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div id="settings" class="hidden">
-            </div>
-            <nav class="navigation">
-                <button id="btn-tab-editor" class="tab-button active"><p>Editor</p></button>
-                <button id="btn-tab-styles" class="tab-button"><p>Styles</p></button>
-                <button id="btn-tab-pages" class="tab-button"><p>Pages & Print</p></button>
-                <!--<button id="btn-tab-settings" class="tab-button"><p>Settings</p></button>--->
-            </nav>
-        </div>
-    </div>
-    <div id="right-side">
-        <div id="book-canvas"></div>
-    </div>
-    <div id="status-bar">
-        <div>
-            <h1>Typometric</h1>
-        </div>
-        <div>
-            <button id="demo"><p>Demo</p></button>
-        </div>
-        <div id="zoom-control">
-            <input type="text" value="100%" id="zoom-input">                            
-        </div>
-    </div>
 
-    <script type="module" src="assets/js/main.js"></script>
-    <input type="file" id="font-upload-input" accept=".ttf,.otf,.woff,.woff2" class="hidden">
-</body>
-</html>
+                        <div>
+                            <p>Element Splitting</p>
+                            <div class="radio-input">
+                                <label class="btn-display">Characters
+                                    <input class="btn-control" type="radio" id="element-splitting-characters" name="element-splitting" value="characters" checked>
+                                </label>
+                                <label class="btn-display">Words
+                                    <input class="btn-control" type="radio" id="element-splitting-words" name="element-splitting" value="words">
+                                </label>
+                                <label class="btn-display">Off
+                                    <input class="btn-control" type="radio" id="element-splitting-off" name="element-splitting" value="off">
+                                </label>
+                            </div>
+                            <p>Line Splitting</p>
+                            <div class="radio-input">
+                                <label class="btn-display">On
+                                    <input class="btn-control" type="radio" id="line-splitting-on" name="line-splitting" value="on">
+                                </label>
+                                <label class="btn-display">Off
+                                    <input class="btn-control" type="radio" id="line-splitting-off" name="line-splitting" value="off" checked>
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <nav class="navigation">
+                    <button id="btn-tab-editor" class="tab-button active"><p>Editor</p></button>
+                    <button id="btn-tab-styles" class="tab-button"><p>Styles</p></button>
+                    <button id="btn-tab-pages" class="tab-button"><p>Pages & Print</p></button>
+                    <button id="btn-tab-settings" class="tab-button"><p>Settings</p></button>
+                </nav>
+            </div>
+        </div>
+        <div id="right-side">
+            <div id="book-canvas"></div>
+        </div>
+        <div id="status-bar">
+            <div id="status-bar-name">
+                <h1>Typometric</h1>
+                <p>Alpha 1.0.0</p>
+            </div>
+            <div>
+                <button id="demo"><p>Demo</p></button>
+            </div>
+            <div id="zoom-control">
+                <input type="text" value="100%" id="zoom-input">                            
+            </div>
+        </div>
+
+        <script type="module" src="assets/js/main.js"></script>
+        <input type="file" id="font-upload-input" accept=".ttf,.otf,.woff,.woff2" class="hidden">
+    </body>
+    </html>

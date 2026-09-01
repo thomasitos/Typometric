@@ -47,7 +47,7 @@ export const initialElementStyles = {
         font: 'inherit',
         isAdvanced: false,
         fontWeight: '700',
-        fontStyle: 'normal',
+        fontStyle: 'bold',
         fontSize: 'inherit',
         lineHeight: 'inherit',
         letterSpacing: 'inherit',
@@ -72,5 +72,18 @@ export const initialElementStyles = {
         translateX: 'inherit',
         translateY: 'inherit',
         axes: {}
+    },
+    margins: {
+    font: 'arial',
+    styleIndex: 0,
+    fontWeight: '400',
+    fontStyle: 'normal',
+    fontSize: '9pt',     // Typische kleine Schriftgröße für Kopf-/Fußzeilen
+    lineHeight: '1.2',
+    letterSpacing: '0pt',
+    translateX: '0px',
+    translateY: '0px',
+    alignment: 'left',
+    axes: {}
     }
 };
