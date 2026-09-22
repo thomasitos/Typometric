@@ -1035,8 +1035,33 @@ function applyDynamicStyles() {
         }
     });
 
-    let styleTag = document.getElementById('dynamic-book-styles');
-    if (!styleTag) {
+    const isFacingPages = (getFacingPagesMode() === 'on');
+        if (isFacingPages) {
+            generatedCss += `
+                #book-canvas.facing-pages-mode .pagedjs_pages {
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                    justify-content: center !important;
+                    row-gap: 20px !important;
+                }
+                #book-canvas.facing-pages-mode .pagedjs_page {
+                    margin: 0 !important;
+                }
+                #book-canvas.facing-pages-mode .pagedjs_page.pagedjs_first_page {
+                    margin-left: ${pageWidthInput.value} !important;
+                }
+                #book-canvas.facing-pages-mode .pagedjs_left_page {
+                    box-shadow: inset -3px 0 5px -2px rgba(0,0,0,0.15) !important;
+                }
+                #book-canvas.facing-pages-mode .pagedjs_right_page {
+                    box-shadow: inset 3px 0 5px -2px rgba(0,0,0,0.15) !important;
+                }
+            `;
+        }
+
+        let styleTag = document.getElementById('dynamic-book-styles');
+        if (!styleTag) {
+
         styleTag = document.createElement('style');
         styleTag.id = 'dynamic-book-styles';
         document.head.appendChild(styleTag);
@@ -1293,8 +1318,6 @@ function triggerBookRender(customDelay = null) {
                     ${marksRule}
                 }
 
-                /* FIX: The margin must be fully defined inside :left and :right. 
-                   Otherwise Paged.js computes margin box heights as 0px and crashes on overflow. */
                 @page:left {
                     margin: ${mTop} ${mRightOrOutside} ${mBottom} ${mLeftOrInside};
                     bleed: ${bTop} ${bLeftOrInside} ${bBottom} ${bRightOrOutside};
@@ -1318,31 +1341,9 @@ function triggerBookRender(customDelay = null) {
                     @bottom-center { ${getMarginBoxStyles(marginInputsRight.bottomCenter, 'bottom')} }
                     @bottom-right { ${getMarginBoxStyles(marginInputsRight.bottomRight, 'bottom')} }
                 }
-
-                #book-canvas.facing-pages-mode .pagedjs_pages {
-                    display: flex !important;
-                    flex-wrap: wrap !important;
-                    justify-content: center !important;
-                    row-gap: 20px !important;
-                }
-
-                #book-canvas.facing-pages-mode .pagedjs_page {
-                    margin: 0 !important;
-                }
-
-                #book-canvas.facing-pages-mode .pagedjs_page.pagedjs_first_page {
-                    margin-left: ${pageWidth} !important;
-                }
-
-                #book-canvas.facing-pages-mode .pagedjs_left_page {
-                    box-shadow: inset -3px 0 5px -2px rgba(0,0,0,0.15) !important;
-                }
-                #book-canvas.facing-pages-mode .pagedjs_right_page {
-                    box-shadow: inset 3px 0 5px -2px rgba(0,0,0,0.15) !important;
-                }
                 `;
             } else {
-                const bleedRule = `bleed: ${bTop} ${bRightOrOutside} ${bBottom} ${bLeftOrInside};`;
+                                const bleedRule = `bleed: ${bTop} ${bRightOrOutside} ${bBottom} ${bLeftOrInside};`;
 
                 pageStyleContent = `
                 @page { 
@@ -1696,10 +1697,43 @@ zoomInput.addEventListener('click', () => {
     zoomInput.select();
 });
 
+// ALT:
+// exportPdfButtons.forEach(button => {
+//     button.addEventListener('click', () => {
+//         window.print();
+//     });
+// });
+
+// NEU: Eleganter Export-Hack
 exportPdfButtons.forEach(button => {
     button.addEventListener('click', () => {
-        window.print();
+        const isFacing = canvas.classList.contains('facing-pages-mode');
+        
+        // 1. Bildschirm-Layout für den Export kurz deaktivieren
+        if (isFacing) {
+            canvas.classList.remove('facing-pages-mode');
+        }
+        
+        // 2. Kurz warten, damit der Browser die Einzelseiten rendern kann
+        setTimeout(() => {
+            window.print(); // Öffnet den PDF-Export
+            
+            // 3. Sobald der Dialog geschlossen wird, die Doppelseiten wieder einschalten
+            if (isFacing) {
+                canvas.classList.add('facing-pages-mode');
+            }
+        }, 150);
     });
+});
+
+// ZUSATZ: Falls der Nutzer Strg+P / Cmd+P auf der Tastatur drückt!
+window.addEventListener('beforeprint', () => {
+    canvas.classList.remove('facing-pages-mode');
+});
+window.addEventListener('afterprint', () => {
+    if (getFacingPagesMode() === 'on') {
+        canvas.classList.add('facing-pages-mode');
+    }
 });
 
 
