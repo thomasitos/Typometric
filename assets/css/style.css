@@ -30,7 +30,7 @@
 
 body {
   display: grid;
-  grid-template-columns: 50vw 50vw;
+  grid-template-columns: 35vw 65vw;
   grid-template-rows: calc(100vh - var(--statusbar-height)) var(--statusbar-height);
   width: 100vw;
   height: 100vh;
@@ -157,7 +157,6 @@ textarea {
 #left-side {
   display: flex;
   align-items: center;
-  justify-content: center;
   width: 100%;
 }
 
@@ -165,10 +164,8 @@ textarea {
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 1fr 75px;
-  gap: 10px;
-  height: 90%;
-  max-height: 90%;
-  aspect-ratio: 5 / 7;
+  height: 100%;
+  width: 100%;
   overflow: hidden;
 }
 
@@ -182,7 +179,7 @@ textarea {
   overflow-y: auto;
 }
 
-#margin-editor-textarea {
+#margin-editor-left-textarea, #margin-editor-right-textarea {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: 1fr 1fr;
@@ -225,6 +222,8 @@ textarea {
   grid-auto-columns: 1fr;
   background-color: var(--bg-panel);
   border: var(--border-thin);
+  border-bottom: none;
+  border-top: none;
 }
 
 /* Right Side Workspace (Canvas) */

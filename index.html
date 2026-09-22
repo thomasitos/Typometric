@@ -44,8 +44,15 @@
                                 </button>
                             </div>
                             <div>
-                                <button class="sidebar-button" id="btn-margins">
-                                    <p>Margins</p>
+                                <button class="sidebar-button" id="btn-margins-left">
+                                    <!-- Dynamically changes text via JS -->
+                                    <p id="label-margins-left">Margins</p>
+                                </button>
+                            </div>
+                            <div>
+                                <!-- Hidden by default until Facing Pages is ON -->
+                                <button class="sidebar-button hidden" id="btn-margins-right">
+                                    <p>Margins right</p>
                                 </button>
                             </div>
                         </div>
@@ -62,16 +69,29 @@
                             </div>
                         </div>
                     </div>
-                    <div id=text-editor-textarea>
+
+                    <div id="text-editor-textarea">
                         <textarea id="editor" autocomplete="off" placeholder="Write your text here..." value=""></textarea>
                     </div>
-                    <div id="margin-editor-textarea" class="hidden">
+
+                    <!-- LEFT (Default) Margins Editor -->
+                    <div id="margin-editor-left-textarea" class="hidden margin-editor-container">
                         <textarea id="margin-editor-top-left" autocomplete="off" placeholder="Edit top left"></textarea>
                         <textarea id="margin-editor-top-center" autocomplete="off" placeholder="Edit top center"></textarea>
                         <textarea id="margin-editor-top-right" autocomplete="off" placeholder="Edit top right"></textarea>
                         <textarea id="margin-editor-bottom-left" autocomplete="off" placeholder="Edit bottom left"></textarea>
                         <textarea id="margin-editor-bottom-center" autocomplete="off" placeholder="Edit bottom center"></textarea>
                         <textarea id="margin-editor-bottom-right" autocomplete="off" placeholder="Edit bottom right"></textarea>
+                    </div>
+
+                    <!-- RIGHT Margins Editor -->
+                    <div id="margin-editor-right-textarea" class="hidden margin-editor-container">
+                        <textarea id="margin-editor-right-top-left" autocomplete="off" placeholder="Edit top left"></textarea>
+                        <textarea id="margin-editor-right-top-center" autocomplete="off" placeholder="Edit top center"></textarea>
+                        <textarea id="margin-editor-right-top-right" autocomplete="off" placeholder="Edit top right"></textarea>
+                        <textarea id="margin-editor-right-bottom-left" autocomplete="off" placeholder="Edit bottom left"></textarea>
+                        <textarea id="margin-editor-right-bottom-center" autocomplete="off" placeholder="Edit bottom center"></textarea>
+                        <textarea id="margin-editor-right-bottom-right" autocomplete="off" placeholder="Edit bottom right"></textarea>
                     </div>
                 </div>
                 <div id="styles" class="panel hidden">
@@ -172,18 +192,46 @@
                                         </label>
                                     </div>
                                 </div>
-                                <div>
-                                    <p>Margin left</p>
-                                    <div class="formula-input">
-                                        <input type="text" id="margin-left-input" 
-                                        value="0mm">
+                                
+                                <!-- Wrapper for normal paragraph margins -->
+                                <div id="paragraph-margins-group">
+                                    <div>
+                                        <p>Indent left</p>
+                                        <div class="formula-input">
+                                            <input type="text" id="indent-left-input" value="0mm">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p>Indent right</p>
+                                        <div class="formula-input">
+                                            <input type="text" id="indent-right-input" value="0mm">
+                                        </div>
                                     </div>
                                 </div>
-                                <div>
-                                    <p>Margin right</p>
-                                    <div class="formula-input">
-                                        <input type="text" id="margin-right-input" 
-                                        value="0mm">
+
+                                <!-- NEW: Indent first line (only visible for Body > Paragraph) -->
+                                <div id="indent-first-line-group">
+                                    <div>
+                                        <p>Indent first line</p>
+                                        <div class="formula-input">
+                                            <input type="text" id="indent-first-line-input" value="0mm">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- New wrapper for Margin text padding (hidden by default) -->
+                                <div id="margin-padding-group" class="hidden">
+                                    <div>
+                                        <p>Padding top</p>
+                                        <div class="formula-input">
+                                            <input type="text" id="padding-top-input" value="0mm">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p>Padding bottom</p>
+                                        <div class="formula-input">
+                                            <input type="text" id="padding-bottom-input" value="0mm">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -386,6 +434,21 @@
                                 value="en">
                             </div>
                         </div>
+                        
+                        <!-- NEW SETTING ADDED HERE -->
+                        <h1 style="margin-top: 15px">Indexation</h1>
+                        <div>
+                            <p>Indexation Scope</p>
+                            <div class="radio-input">
+                                <label class="btn-display">Continuous
+                                    <input class="btn-control" type="radio" id="indexation-continuous" name="indexation-scope" value="continuous" checked>
+                                </label>
+                                <label class="btn-display">Paragraph
+                                    <input class="btn-control" type="radio" id="indexation-paragraph" name="indexation-scope" value="paragraph">
+                                </label>
+                            </div>
+                        </div>
+
                         <h1 style="margin-top: 15px">Performance</h1>
                         <div>
                             <p>Rendering</p>
@@ -445,7 +508,7 @@
                 <p>Alpha 1.0.0</p>
             </div>
             <div>
-                <button id="demo"><p>Demo</p></button>
+                <!--<button id="demo"><p>Demo</p></button>-->
             </div>
             <div id="zoom-control">
                 <input type="text" value="100%" id="zoom-input">                            

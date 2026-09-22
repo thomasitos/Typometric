@@ -25,8 +25,10 @@ const stylesPanel = document.getElementById('styles');
 const pagesPanel = document.getElementById('pages');
 const settingspanel = document.getElementById('settings');
 const alignmentRadios = document.querySelectorAll('input[name="alignment"]');
-const marginLeftInput = document.getElementById('margin-left-input');
-const marginRightInput = document.getElementById('margin-right-input');
+const indentLeftInput = document.getElementById('indent-left-input');
+const indentRightInput = document.getElementById('indent-right-input');
+const indentFirstLineInput = document.getElementById('indent-first-line-input');
+const indentFirstLineGroup = document.getElementById('indent-first-line-group');
 const pagePresetSelect = document.getElementById('page-preset-select');
 const pageHeightInput = document.getElementById('page-height-input');
 const pageWidthInput = document.getElementById('page-width-input');
@@ -46,9 +48,7 @@ const advancedTransform = document.getElementById('advanced-transform');
 const advancedToggleSection = document.getElementById('advanced-toggle-section');
 const advancedRadios = document.querySelectorAll('input[name="advanced-mode"]');
 const btnText = document.getElementById('btn-text');
-const btnMargins = document.getElementById('btn-margins');
 const textEditorTextarea = document.getElementById('text-editor-textarea');
-const marginEditorTextarea = document.getElementById('margin-editor-textarea');
 const fontUploadInput = document.getElementById('font-upload-input');
 const hyphenationRadios = document.querySelectorAll('input[name="hyphenation"]');
 const hyphenationOnRadio = document.getElementById('hyphenation-on');
@@ -56,6 +56,7 @@ const hyphenationOffRadio = document.getElementById('hyphenation-off');
 const languageInput = document.getElementById('language-input');
 const fontStyleSelect = document.getElementById('font-style-select');
 const renderingRadios = document.querySelectorAll('input[name="rendering"]');
+const indexationRadios = document.querySelectorAll('input[name="indexation-scope"]');
 const elementSplittingRadios = document.querySelectorAll('input[name="element-splitting"]');
 const lineSplittingRadios = document.querySelectorAll('input[name="line-splitting"]');
 const facingPagesRadios = document.querySelectorAll('input[name="facing-pages"]');
@@ -73,16 +74,34 @@ const rotateSelect = document.getElementById('rotate-select');
 const skewXInput = document.getElementById('skew-x-input');
 const skewYInput = document.getElementById('skew-y-input');
 const rotateInput = document.getElementById('rotate-input');
+const btnMarginsLeft = document.getElementById('btn-margins-left');
+const btnMarginsRight = document.getElementById('btn-margins-right');
+const labelMarginsLeft = document.getElementById('label-margins-left');
+const marginEditorLeftTextarea = document.getElementById('margin-editor-left-textarea');
+const marginEditorRightTextarea = document.getElementById('margin-editor-right-textarea');
+const paragraphMarginsGroup = document.getElementById('paragraph-margins-group');
+const marginPaddingGroup = document.getElementById('margin-padding-group');
+const paddingTopInput = document.getElementById('padding-top-input');
+const paddingBottomInput = document.getElementById('padding-bottom-input');
 
 let previousFontKey = 'arial';
 
-const marginInputs = {
+const marginInputsLeft = {
     topLeft: document.getElementById('margin-editor-top-left'),
     topCenter: document.getElementById('margin-editor-top-center'),
     topRight: document.getElementById('margin-editor-top-right'),
     bottomLeft: document.getElementById('margin-editor-bottom-left'),
     bottomCenter: document.getElementById('margin-editor-bottom-center'),
     bottomRight: document.getElementById('margin-editor-bottom-right')
+};
+
+const marginInputsRight = {
+    topLeft: document.getElementById('margin-editor-right-top-left'),
+    topCenter: document.getElementById('margin-editor-right-top-center'),
+    topRight: document.getElementById('margin-editor-right-top-right'),
+    bottomLeft: document.getElementById('margin-editor-right-bottom-left'),
+    bottomCenter: document.getElementById('margin-editor-right-bottom-center'),
+    bottomRight: document.getElementById('margin-editor-right-bottom-right')
 };
 
 // ==========================================
@@ -179,6 +198,10 @@ function applyCustomCharSplitting(container) {
     let node;
 
     while ((node = walker.nextNode())) {
+        // NEU: Ignoriere reine Whitespace/Umbruch-Knoten, die von marked.js für die HTML-Formatierung generiert werden
+        if (node.nodeValue.replace(/[\n\r\t]+/g, '').length === 0) {
+            continue;
+        }
         if (node.nodeValue.length > 0) {
             textNodes.push(node);
         }
@@ -191,13 +214,17 @@ function applyCustomCharSplitting(container) {
 
         let currentWord = null;
         let currentSyllable = null;
-        let spaceCountInSequence = 0; // Zähler für aufeinanderfolgende Leerzeichen
+        let spaceCountInSequence = 0; 
 
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
             const code = char.charCodeAt(0);
 
-            // Leerzeichen (gewöhnlich oder geschützt)
+            // NEU: Überspringe Zeilenumbrüche und Tabs im Text, die keine echten Buchstaben sind
+            if (char === '\n' || char === '\r' || char === '\t') {
+                continue;
+            }
+
             if (char === ' ' || char === '\u00A0') {
                 currentWord = null;
                 currentSyllable = null;
@@ -207,8 +234,6 @@ function applyCustomCharSplitting(container) {
                 spaceSpan.className = 'char space';
                 spaceSpan.setAttribute('data-char', ' ');
 
-                // Erstes Leerzeichen = ' ' (wird im Blocksatz gedehnt)
-                // Weitere Leerzeichen = '\u00A0' (verhindert das Kollabieren)
                 if (spaceCountInSequence === 1) {
                     spaceSpan.textContent = ' ';
                 } else {
@@ -217,7 +242,6 @@ function applyCustomCharSplitting(container) {
 
                 frag.appendChild(spaceSpan);
             } 
-            // Bedconditioneller Trennstrich (Soft Hyphen / \u00AD)
             else if (char === '\u00AD' || code === 173) {
                 spaceCountInSequence = 0;
                 currentSyllable = null;
@@ -233,7 +257,6 @@ function applyCustomCharSplitting(container) {
                 }
                 currentWord.appendChild(shySpan);
             } 
-            // Normales Zeichen
             else {
                 spaceCountInSequence = 0;
 
@@ -456,8 +479,14 @@ function saveCurrentSubTabState() {
         current.skewY = skewYInput.value;
     }
 
-    current.marginLeft = marginLeftInput.value;
-    current.marginRight = marginRightInput.value;
+    current.paddingTop = paddingTopInput.value;       // <-- Added
+    current.paddingBottom = paddingBottomInput.value;
+    current.indentLeft = indentLeftInput.value;
+    current.indentRight = indentRightInput.value;
+    
+    if (currentSubTab === 'body' && indentFirstLineInput) {
+        current.indentFirstLine = indentFirstLineInput.value;
+    }
 
     const activeRadio = document.querySelector('input[name="alignment"]:checked');
     if (activeRadio) current.alignment = activeRadio.value;
@@ -475,6 +504,7 @@ function loadSubTabState(key) {
     const data = elementStyles[key];
 
     const isInlineElement = (key === 'bold' || key === 'italic');
+    const isMarginElement = (key === 'margins'); // <-- Added check
 
     const isAdvancedOn = !!data.isAdvanced;
     const targetRadio = document.getElementById(isAdvancedOn ? 'advanced-on' : 'advanced-off');
@@ -482,6 +512,10 @@ function loadSubTabState(key) {
 
     if (paragraphSettings) paragraphSettings.classList.toggle('hidden', isInlineElement);
     if (advancedToggleSection) advancedToggleSection.classList.toggle('hidden', !isInlineElement);
+
+    // FIX: Swap the margin inputs based on whether the Margins tab is active
+    if (paragraphMarginsGroup) paragraphMarginsGroup.classList.toggle('hidden', isMarginElement);
+    if (marginPaddingGroup) marginPaddingGroup.classList.toggle('hidden', !isMarginElement);
 
     const showAdvanced = !isInlineElement || isAdvancedOn;
     if (advancedMetrics) advancedMetrics.classList.toggle('hidden', !showAdvanced);
@@ -512,8 +546,18 @@ function loadSubTabState(key) {
     fontSizeInput.value = (data.fontSize === 'inherit') ? elementStyles.body.fontSize : data.fontSize;
     lineHeightInput.value = (data.lineHeight === 'inherit') ? elementStyles.body.lineHeight : data.lineHeight;
     letterSpacingInput.value = (data.letterSpacing === 'inherit') ? elementStyles.body.letterSpacing : data.letterSpacing;
-    marginLeftInput.value = data.marginLeft;
-    marginRightInput.value = data.marginRight;
+    indentLeftInput.value = data.indentLeft || data.marginLeft || '0px';
+    indentRightInput.value = data.indentRight || data.marginRight || '0px';
+
+    if (indentFirstLineGroup) {
+        indentFirstLineGroup.classList.toggle('hidden', key !== 'body');
+    }
+    if (key === 'body' && indentFirstLineInput) {
+        indentFirstLineInput.value = data.indentFirstLine || '0mm';
+    }
+
+    paddingTopInput.value = data.paddingTop || '0mm';       // <-- Added
+    paddingBottomInput.value = data.paddingBottom || '0mm'; // <-- Added
     translateXInput.value = (data.translateX === 'inherit') ? elementStyles.body.translateX : data.translateX;
     translateYInput.value = (data.translateY === 'inherit') ? elementStyles.body.translateY : data.translateY;
     rotateInput.value = (data.rotate === 'inherit') ? elementStyles.body.rotate : (data.rotate || '0deg');
@@ -803,7 +847,6 @@ function applyDynamicStyles() {
     const hyphensValue = isHyphenationOn ? 'auto' : 'manual';
 
     // Grundlegende Layout-Styles & Whitespace Handling
-// Grundlegende Layout-Styles & Whitespace Handling
     generatedCss += `
     .pagedjs_area, 
     .pagedjs_page, 
@@ -857,6 +900,14 @@ function applyDynamicStyles() {
         position: relative !important;
         white-space: normal !important;
     }
+
+    .pagedjs_area .word,
+    .pagedjs_area .syllable,
+    .pagedjs_area .char,
+    .pagedjs_area .line {
+        text-indent: 0 !important;
+    }
+
     `;
 
     let splitTargetSelector = '.char';
@@ -887,19 +938,27 @@ function applyDynamicStyles() {
         const effectiveLineHeight = (style.lineHeight === 'inherit') ? elementStyles.body.lineHeight : style.lineHeight;
         const effectiveLetterSpacing = (style.letterSpacing === 'inherit') ? elementStyles.body.letterSpacing : style.letterSpacing;
 
-        const effectiveTx = (style.translateX === 'inherit') ? elementStyles.body.translateX : style.translateX;
-        const effectiveTy = (style.translateY === 'inherit') ? elementStyles.body.translateY : style.translateY;
-        const effectiveRot = (style.rotate === 'inherit') ? elementStyles.body.rotate : style.rotate;
-        const effectiveSx = (style.skewX === 'inherit') ? elementStyles.body.skewX : style.skewX;
-        const effectiveSy = (style.skewY === 'inherit') ? elementStyles.body.skewY : style.skewY;
+        const tx = (style.translateX === 'inherit' ? elementStyles.body.translateX : style.translateX || '0px').trim();
+        const ty = (style.translateY === 'inherit' ? elementStyles.body.translateY : style.translateY || '0px').trim();
+        const rot = (style.rotate === 'inherit' ? elementStyles.body.rotate : style.rotate || '0deg').trim();
+        const sx = (style.skewX === 'inherit' ? elementStyles.body.skewX : style.skewX || '0deg').trim();
+        const sy = (style.skewY === 'inherit' ? elementStyles.body.skewY : style.skewY || '0deg').trim();
 
-        const tx = (effectiveTx || '0px').trim();
-        const ty = (effectiveTy || '0px').trim();
-        const rot = (effectiveRot || '0deg').trim();
-        const sx = (effectiveSx || '0deg').trim();
-        const sy = (effectiveSy || '0deg').trim();
-
-        const combinedTransform = `rotate(calc(${rot})) skewX(calc(${sx})) skewY(calc(${sy}))`;
+        // FIX: Nur Transforms / Positions setzen, wenn sie aktiv verändert wurden.
+        // Andernfalls macht Paged.js die Block-Elemente (z.B. <p>) monolithisch und kann sie nicht mehr umbrechen.
+        let transformRule = '';
+        let positionRule = '';
+        
+        if (rot !== '0deg' || sx !== '0deg' || sy !== '0deg') {
+            transformRule = `transform: rotate(calc(${rot})) skewX(calc(${sx})) skewY(calc(${sy})) !important;`;
+        }
+        if (tx !== '0px' || ty !== '0px' || transformRule !== '') {
+            positionRule = `
+                position: relative !important;
+                left: calc(${tx}) !important;
+                top: calc(${ty}) !important;
+            `;
+        }
 
         let fontVariationRules = 'font-variation-settings: normal !important;';
         if (style.axes && Object.keys(style.axes).length > 0) {
@@ -915,9 +974,11 @@ function applyDynamicStyles() {
         if (elemSplitting === 'off') {
             generatedCss += `
             .pagedjs_area ${selector} {
+                margin-top: 0 !important;    /* <--- NEU: Verhindert die großen Lücken */
+                margin-bottom: 0 !important; /* <--- NEU: Verhindert die großen Lücken */
                 text-align: ${style.alignment || 'left'} !important;
-                padding-left: calc(${style.marginLeft || '0px'}) !important;
-                padding-right: calc(${style.marginRight || '0px'}) !important;
+                padding-left: calc(${style.indentLeft || style.marginLeft || '0px'}) !important;
+                padding-right: calc(${style.indentRight || style.marginRight || '0px'}) !important;
                 box-sizing: border-box !important;
                 font-family: ${finalFontFamily} !important;
                 font-weight: ${style.fontWeight || '400'} !important;
@@ -925,19 +986,19 @@ function applyDynamicStyles() {
                 font-size: calc(${effectiveFontSize || '12pt'}) !important;
                 line-height: calc(${effectiveLineHeight || '1.4'}) !important;
                 letter-spacing: calc(${effectiveLetterSpacing || '0px'}) !important;
-                position: relative !important;
-                left: calc(${tx}) !important;
-                top: calc(${ty}) !important;
-                transform: ${combinedTransform} !important;
+                ${positionRule}
+                ${transformRule}
                 ${fontVariationRules}
             }
             `;
         } else {
             generatedCss += `
             .pagedjs_area ${selector} {
+                margin-top: 0 !important;    /* <--- NEU: Verhindert die großen Lücken */
+                margin-bottom: 0 !important; /* <--- NEU: Verhindert die großen Lücken */
                 text-align: ${style.alignment || 'left'} !important;
-                padding-left: calc(${style.marginLeft || '0px'}) !important;
-                padding-right: calc(${style.marginRight || '0px'}) !important;
+                padding-left: calc(${style.indentLeft || '0px'}) !important;
+                padding-right: calc(${style.indentRight || '0px'}) !important;
                 box-sizing: border-box !important;
                 font-family: ${finalFontFamily} !important;
                 font-weight: ${style.fontWeight || '400'} !important;
@@ -949,16 +1010,26 @@ function applyDynamicStyles() {
             .pagedjs_area ${selector} ${splitTargetSelector} {
                 display: inline-block !important;
                 vertical-align: baseline !important;
-                position: relative !important;
-                left: calc(${tx}) !important;
-                top: calc(${ty}) !important;
-                transform: ${combinedTransform} !important;
                 font-family: ${finalFontFamily} !important;
                 font-weight: ${style.fontWeight || '400'} !important;
                 font-style: ${style.fontStyle || 'normal'} !important;
                 font-size: calc(${effectiveFontSize || '12pt'}) !important;
                 letter-spacing: calc(${effectiveLetterSpacing || '0px'}) !important;
+                ${positionRule}
+                ${transformRule}
                 ${fontVariationRules}
+            }
+            `;
+        }
+        if (key === 'body' && style.indentFirstLine && style.indentFirstLine !== '0mm' && style.indentFirstLine !== '0px') {
+            generatedCss += `
+            /* Standard-Indent für normale Paragraphen */
+            .pagedjs_area ${selector} + ${selector} {
+                text-indent: calc(${style.indentFirstLine}) !important;
+            }
+            /* Falls Line-Splitting an ist: Den Indent gezielt nur auf die allererste Zeile übertragen */
+            .pagedjs_area ${selector} + ${selector} > .line:first-child {
+                text-indent: calc(${style.indentFirstLine}) !important;
             }
             `;
         }
@@ -977,6 +1048,7 @@ function applyDynamicStyles() {
 // 7. PAGED.JS RENDERING ENGINE
 // ==========================================
 let isRendering = false;
+let pendingRenderDelay = null; // FIX: Verhindert infinite call stacks und sichere Verzögerungsweitergabe.
 
 function wrapWordsInElement(element) {
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
@@ -1076,50 +1148,115 @@ function triggerBookRender(customDelay = null) {
         }
     }
 
-    typingTimeout = setTimeout(async () => {
-        if (isRendering) {
-            triggerBookRender(customDelay);
-            return;
-        }
+    if (isRendering) {
+        pendingRenderDelay = delay;
+        return;
+    }
 
+    typingTimeout = setTimeout(async () => {
         isRendering = true;
         let pageStyleUrl = null;
 
         try {
-            document.querySelectorAll('head style').forEach(style => {
-                if (style.id !== 'dynamic-effects' && (style.textContent.includes('.pagedjs_') || style.textContent.includes('@page'))) {
-                    style.remove();
-                }
-            });
+                    // FIX: Zoom-Crash bei Paged.js & Line-Splitting verhindern
+                    canvas.style.setProperty('--preview-zoom', '100%');
 
-            applyDynamicStyles();
+                    // ==========================================
+                    // FIX: Alte Paged.js Stylesheets RESTLOS entfernen!
+                    // Da Paged.js CSS dynamisch injiziert, ist textContent leer. 
+                    // Wir müssen stattdessen nach dem data-Attribut suchen.
+                    // ==========================================
+                    document.querySelectorAll('head style').forEach(style => {
+                        if (style.id !== 'dynamic-effects' && style.id !== 'dynamic-book-styles') {
+                            if (style.hasAttribute('data-pagedjs-inserted-styles') || 
+                                style.textContent.includes('.pagedjs_') || 
+                                style.textContent.includes('@page')) {
+                                style.remove();
+                            }
+                        }
+                    });
+
+                    applyDynamicStyles();
 
             const pageWidth = pageWidthInput.value;
             const pageHeight = pageHeightInput.value;
 
+            // ==========================================
+            // FIX: Safely resolve margin styling and prevent 'calc(inherit)'
+            // ==========================================
+            // ==========================================
+            // FIX: Safely resolve margin styling and prevent 'calc(inherit)'
+            // ==========================================
             const marginStyle = elementStyles.margins || {};
-            const effectiveMarginFontKey = (marginStyle.font === 'inherit') ? elementStyles.body.font : marginStyle.font;
-            const fontObj = fontConfig[effectiveMarginFontKey] || fontConfig['arial'];
+            
+            const effectiveMarginFontKey = (!marginStyle.font || marginStyle.font === 'inherit') ? elementStyles.body.font : marginStyle.font;
+            const effectiveMarginFontSize = (!marginStyle.fontSize || marginStyle.fontSize === 'inherit') ? (elementStyles.body.fontSize || '9pt') : marginStyle.fontSize;
+            const effectiveMarginLineHeight = (!marginStyle.lineHeight || marginStyle.lineHeight === 'inherit') ? (elementStyles.body.lineHeight || '1.2') : marginStyle.lineHeight;
+
+            // Grab the active padding values (default to 0mm)
+            const effectivePaddingTop = marginStyle.paddingTop || '0mm';
+            const effectivePaddingBottom = marginStyle.paddingBottom || '0mm';
+
+            const fontObj = fontConfig[effectiveMarginFontKey] || fontConfig['arial'] || { cssValue: 'sans-serif' };
             const availableStyles = fontObj.styles || ALL_4_STYLES;
             const styleIdx = marginStyle.styleIndex || 0;
             const currentStyleObj = availableStyles[styleIdx] || availableStyles[0];
 
             const marginFontFamily = currentStyleObj?.cssValue || fontObj.cssValue || 'sans-serif';
-            const marginFontSize = marginStyle.fontSize || '9pt';
-            const marginLineHeight = marginStyle.lineHeight || '1.2';
             const marginFontWeight = marginStyle.fontWeight || '400';
             const marginFontStyle = marginStyle.fontStyle || 'normal';
 
-            const getMarginBoxStyles = (inputEl) => {
-                const val = inputEl ? inputEl.value.trim() : '';
-                if (!val) return 'content: none;';
+            // NEU: Lese die Achsen (Variable Fonts) für die Margins aus
+            let marginFontVariationRules = 'font-variation-settings: normal !important;';
+            if (marginStyle.axes && Object.keys(marginStyle.axes).length > 0) {
+                const axesRules = Object.keys(marginStyle.axes)
+                    .filter(axisId => marginStyle.axes[axisId] && String(marginStyle.axes[axisId]).trim() !== '')
+                    .map(axisId => `'${axisId}' calc(${marginStyle.axes[axisId]})`);
+                
+                if (axesRules.length > 0) {
+                    marginFontVariationRules = `font-variation-settings: ${axesRules.join(', ')} !important;`;
+                }
+            }
+
+            const getMarginBoxStyles = (inputEl, boxType) => {
+                const val = inputEl ? inputEl.value : '';
+                if (!val.trim()) return 'content: none;';
+                
+                // NEU: Zerschneide den Text, um CSS-Funktionen wie counter(page) zu finden
+                const parts = val.split(/(counters?\([^)]+\))/g);
+                const contentPieces = parts.map(part => {
+                    if (part.startsWith('counter')) {
+                        // Die Funktion direkt als CSS-Code zurückgeben (ohne Anführungszeichen)
+                        return part; 
+                    } else if (part.length > 0) {
+                        // Normalen Text weiterhin escapen und sicher in Anführungszeichen setzen
+                        const escapedVal = part
+                            .replace(/\\/g, '\\\\') 
+                            .replace(/"/g, '\\"')   
+                            .replace(/\n/g, '\\A '); 
+                        return `"${escapedVal}"`;
+                    }
+                    return '';
+                }).filter(Boolean);
+                
+                // Füge alles mit Leerzeichen zusammen (z.B. "Page " counter(page) " of " counter(pages))
+                const finalContent = contentPieces.join(' ') || 'none';
+
+                // Determine if we apply padding to the top or bottom
+                let paddingRule = '';
+                if (boxType === 'top') paddingRule = `padding-top: calc(${effectivePaddingTop}) !important;`;
+                if (boxType === 'bottom') paddingRule = `padding-bottom: calc(${effectivePaddingBottom}) !important;`;
+
                 return `
-                    content: "${val}";
+                    content: ${finalContent}; /* <-- HIER WURDEN DIE ANFÜHRUNGSZEICHEN ENTFERNT */
                     font-family: ${marginFontFamily} !important;
-                    font-size: calc(${marginFontSize}) !important;
-                    line-height: calc(${marginLineHeight}) !important;
+                    font-size: calc(${effectiveMarginFontSize}) !important;
+                    line-height: calc(${effectiveMarginLineHeight}) !important;
                     font-weight: ${marginFontWeight} !important;
                     font-style: ${marginFontStyle} !important;
+                    white-space: pre-wrap !important; 
+                    ${paddingRule}
+                    ${marginFontVariationRules}
                 `;
             };
 
@@ -1153,28 +1290,33 @@ function triggerBookRender(customDelay = null) {
                 pageStyleContent = `
                 @page { 
                     size: ${pageWidth} ${pageHeight}; 
-                    margin-top: ${mTop};
-                    margin-bottom: ${mBottom};
                     ${marksRule}
-
-                    @top-left { ${getMarginBoxStyles(marginInputs.topLeft)} }
-                    @top-center { ${getMarginBoxStyles(marginInputs.topCenter)} }
-                    @top-right { ${getMarginBoxStyles(marginInputs.topRight)} }
-                    @bottom-left { ${getMarginBoxStyles(marginInputs.bottomLeft)} }
-                    @bottom-center { ${getMarginBoxStyles(marginInputs.bottomCenter)} }
-                    @bottom-right { ${getMarginBoxStyles(marginInputs.bottomRight)} }
                 }
 
-                @page :left {
-                    margin-left: ${mRightOrOutside};
-                    margin-right: ${mLeftOrInside};
+                /* FIX: The margin must be fully defined inside :left and :right. 
+                   Otherwise Paged.js computes margin box heights as 0px and crashes on overflow. */
+                @page:left {
+                    margin: ${mTop} ${mRightOrOutside} ${mBottom} ${mLeftOrInside};
                     bleed: ${bTop} ${bLeftOrInside} ${bBottom} ${bRightOrOutside};
+
+                    @top-left { ${getMarginBoxStyles(marginInputsLeft.topLeft, 'top')} }
+                    @top-center { ${getMarginBoxStyles(marginInputsLeft.topCenter, 'top')} }
+                    @top-right { ${getMarginBoxStyles(marginInputsLeft.topRight, 'top')} }
+                    @bottom-left { ${getMarginBoxStyles(marginInputsLeft.bottomLeft, 'bottom')} }
+                    @bottom-center { ${getMarginBoxStyles(marginInputsLeft.bottomCenter, 'bottom')} }
+                    @bottom-right { ${getMarginBoxStyles(marginInputsLeft.bottomRight, 'bottom')} }
                 }
 
-                @page :right {
-                    margin-left: ${mLeftOrInside};
-                    margin-right: ${mRightOrOutside};
+                @page:right {
+                    margin: ${mTop} ${mLeftOrInside} ${mBottom} ${mRightOrOutside};
                     bleed: ${bTop} ${bRightOrOutside} ${bBottom} ${bLeftOrInside};
+
+                    @top-left { ${getMarginBoxStyles(marginInputsRight.topLeft, 'top')} }
+                    @top-center { ${getMarginBoxStyles(marginInputsRight.topCenter, 'top')} }
+                    @top-right { ${getMarginBoxStyles(marginInputsRight.topRight, 'top')} }
+                    @bottom-left { ${getMarginBoxStyles(marginInputsRight.bottomLeft, 'bottom')} }
+                    @bottom-center { ${getMarginBoxStyles(marginInputsRight.bottomCenter, 'bottom')} }
+                    @bottom-right { ${getMarginBoxStyles(marginInputsRight.bottomRight, 'bottom')} }
                 }
 
                 #book-canvas.facing-pages-mode .pagedjs_pages {
@@ -1209,12 +1351,12 @@ function triggerBookRender(customDelay = null) {
                     ${marksRule}
                     ${bleedRule}
 
-                    @top-left { ${getMarginBoxStyles(marginInputs.topLeft)} }
-                    @top-center { ${getMarginBoxStyles(marginInputs.topCenter)} }
-                    @top-right { ${getMarginBoxStyles(marginInputs.topRight)} }
-                    @bottom-left { ${getMarginBoxStyles(marginInputs.bottomLeft)} }
-                    @bottom-center { ${getMarginBoxStyles(marginInputs.bottomCenter)} }
-                    @bottom-right { ${getMarginBoxStyles(marginInputs.bottomRight)} }
+                    @top-left { ${getMarginBoxStyles(marginInputsLeft.topLeft, 'top')} }
+                    @top-center { ${getMarginBoxStyles(marginInputsLeft.topCenter, 'top')} }
+                    @top-right { ${getMarginBoxStyles(marginInputsLeft.topRight, 'top')} }
+                    @bottom-left { ${getMarginBoxStyles(marginInputsLeft.bottomLeft, 'bottom')} }
+                    @bottom-center { ${getMarginBoxStyles(marginInputsLeft.bottomCenter, 'bottom')} }
+                    @bottom-right { ${getMarginBoxStyles(marginInputsLeft.bottomRight, 'bottom')} }
                 }
                 `;
             }
@@ -1247,26 +1389,32 @@ function triggerBookRender(customDelay = null) {
             const elemSplitting = getElementSplittingMode();
             const lineSplitting = getLineSplittingMode();
             const sections = userText.split('---');
-
+            
             for (const sectionText of sections) {
                 const sectionDiv = document.createElement('div');
                 sectionDiv.className = 'book-section';
 
-                // 1. Zeilenweise spalten für korrekten Erhalt aller leeren Zeilen
+                // 1. Text VOR dem Markdown-Parsing präparieren
                 const lines = sectionText.split(/\r?\n/);
-                sectionDiv.innerHTML = lines.map(p => {
-                    // 2. Doppelte/Mehrfache Leerzeichen erhalten durch \u00A0
-                    const preservedSpaces = p.replace(/ {2,}/g, match => ' ' + '\u00A0'.repeat(match.length - 1));
-
-                    // 3. Leere Zeilen mit expliziter Höhe um Margin-Collapsing zu verhindern
-                    if (preservedSpaces.trim() === '') {
-                        return '<p style="margin: 0; min-height: 1.2em;">&nbsp;</p>';
+                const processedLines = lines.map(line => {
+                    let l = line.replace(/ {2,}/g, match => ' ' + '&nbsp;'.repeat(match.length - 1));
+                    
+                    // Echte leere Zeilen als sicheren HTML-Block zurückgeben.
+                    // Marked.js verpackt <div> Tags NICHT in <p> Tags!
+                    if (l.trim() === '') {
+                        return '<div class="empty-line" style="margin: 0; min-height: 1.2em;">&nbsp;</div>';
                     }
-                    return `<p>${preservedSpaces}</p>`;
-                }).join('');
+                    return l;
+                });
+
+                // 2. Mit \n\n verbinden erzwingt "1 Enter = 1 echtes <p>" bei marked.js.
+                // Deine leeren Zeilen fließen als reines HTML einfach sicher mit hindurch.
+                sectionDiv.innerHTML = marked.parse(processedLines.join('\n\n'));
 
                 const isHyphenationOn = (getHyphenationValue() === 'on');
                 
+                
+                // --- AB HIER MUSS DEIN BEREITS BESTEHENDER CODE BLEIBEN ---
                 if (elemSplitting === 'characters') {
                     if (isHyphenationOn) {
                         await applyExperimentalSplitting(sectionDiv, currentLang);
@@ -1284,36 +1432,114 @@ function triggerBookRender(customDelay = null) {
                     }
                 }
 
+                // WICHTIG: Das fertige Div an den Container für Paged.js anhängen
                 ghost.appendChild(sectionDiv);
             }
-            
+  
+            // ==========================================
+            // FIX: VARIABLEN VOR DEM PAGED.JS RENDER INJIZIEREN
+            // ==========================================
+            const indexationScope = document.querySelector('input[name="indexation-scope"]:checked')?.value || 'continuous';
+
+            if (indexationScope === 'continuous') {
+                const allCharsGhost = ghost.querySelectorAll('.char:not(.shy)');
+                const charTotal = allCharsGhost.length;
+                allCharsGhost.forEach((char, index) => {
+                    char.style.setProperty('--char-index', index);
+                    char.style.setProperty('--char-total', charTotal);
+                });
+
+                const allWordsGhost = ghost.querySelectorAll('.word');
+                const wordTotal = allWordsGhost.length;
+                allWordsGhost.forEach((word, index) => {
+                    word.style.setProperty('--word-index', index);
+                    word.style.setProperty('--word-total', wordTotal);
+                });
+            } else {
+                // Index resets for every individual paragraph
+                const paragraphs = ghost.querySelectorAll('p:not(.empty-line), h1, h2, h3');
+                paragraphs.forEach(p => {
+                    const pChars = p.querySelectorAll('.char:not(.shy)');
+                    pChars.forEach((char, index) => {
+                        char.style.setProperty('--char-index', index);
+                        char.style.setProperty('--char-total', pChars.length);
+                    });
+
+                    const pWords = p.querySelectorAll('.word');
+                    pWords.forEach((word, index) => {
+                        word.style.setProperty('--word-index', index);
+                        word.style.setProperty('--word-total', pWords.length);
+                    });
+                });
+            }
+
+            const allShysGhost = ghost.querySelectorAll('.char.shy');
+            allShysGhost.forEach(shy => {
+                // Da die Buchstaben in <span class="syllable"> verpackt sind, müssen wir 
+                // gezielt den Baum rückwärts durchsuchen, um den echten Buchstaben zu finden.
+                let node = shy.previousSibling;
+                let prevChar = null;
+                while(node) {
+                    if (node.nodeType === 1) { // Ist ein HTML-Element
+                        if (node.classList.contains('char') && !node.classList.contains('shy')) {
+                            prevChar = node; 
+                            break;
+                        }
+                        const chars = node.querySelectorAll('.char:not(.shy)');
+                        if (chars && chars.length > 0) {
+                            prevChar = chars[chars.length - 1]; 
+                            break;
+                        }
+                    }
+                    node = node.previousSibling;
+                }
+                
+                // Wenn gefunden: Kopiere die mathematischen CSS-Variablen!
+                if (prevChar) {
+                    shy.style.setProperty('--char-index', prevChar.style.getPropertyValue('--char-index'));
+                    shy.style.setProperty('--char-total', prevChar.style.getPropertyValue('--char-total'));
+                }
+            });
+
             canvas.innerHTML = '';
             canvas.setAttribute('lang', currentLang);
 
             const previewer = new Paged.Previewer();
+            
+            // Paged.js wertet jetzt beim Rendern die Inline-Styles aus und
+            // berechnet sofort die korrekte Größe für die Seitenaufteilung!
             await previewer.preview(ghost.innerHTML, ['assets/css/page.css', pageStyleUrl], canvas);
 
-            if (lineSplitting === 'on') {
-                applyLineSplitting(canvas);
-            }
-
-            const allChars = canvas.querySelectorAll('.char');
-            allChars.forEach((char, index) => {
-                char.style.setProperty('--char-index', index);
-                char.style.setProperty('--char-total', allChars.length);
+            const canvasShys = canvas.querySelectorAll('.char.shy');
+            canvasShys.forEach(shy => {
+                const word = shy.closest('.word');
+                // Nur wenn das Wort exakt HIER auf eine neue Seite geschnitten wurde:
+                if (word && word.hasAttribute('data-split-to') && word.lastElementChild === shy) {
+                    shy.textContent = '-';
+                }
             });
 
-            const allWords = canvas.querySelectorAll('.word');
-            allWords.forEach((word, index) => {
-                word.style.setProperty('--word-index', index);
-                word.style.setProperty('--word-total', allWords.length);
-            });
+        if (lineSplitting === 'on') {
+            applyLineSplitting(canvas);
+        }
 
+        if (indexationScope === 'continuous') {
             const allLines = canvas.querySelectorAll('.line');
             allLines.forEach((line, index) => {
                 line.style.setProperty('--line-index', index);
                 line.style.setProperty('--line-total', allLines.length);
             });
+        } else {
+            // Line index resets for every individual paragraph
+            const paragraphs = canvas.querySelectorAll('p:not(.empty-line), h1, h2, h3');
+            paragraphs.forEach(p => {
+                const pLines = p.querySelectorAll('.line');
+                pLines.forEach((line, index) => {
+                    line.style.setProperty('--line-index', index);
+                    line.style.setProperty('--line-total', pLines.length);
+                });
+            });
+        }
 
         } catch (err) {
             console.warn('Paged.js Render-Zyklus abgefangen:', err);
@@ -1321,7 +1547,16 @@ function triggerBookRender(customDelay = null) {
             if (pageStyleUrl) {
                 URL.revokeObjectURL(pageStyleUrl);
             }
+
+            applyZoom(zoomInput.value);
+
             isRendering = false;
+            
+            if (pendingRenderDelay !== null) {
+                const nextDelay = pendingRenderDelay;
+                pendingRenderDelay = null;
+                triggerBookRender(nextDelay);
+            }
         }
 
     }, delay);
@@ -1330,6 +1565,15 @@ function triggerBookRender(customDelay = null) {
 // ==========================================
 // 8. EVENT LISTENERS
 // ==========================================
+
+const settingInputs = [
+    fontSizeInput, lineHeightInput, letterSpacingInput,
+    indentLeftInput, indentRightInput, indentFirstLineInput, paddingTopInput, paddingBottomInput, // <-- Added here
+    translateXInput, translateYInput, rotateInput, skewXInput, skewYInput,
+    pageHeightInput, pageWidthInput,
+    pageMarginTopInput, pageMarginBottomInput, pageMarginLeftInput, pageMarginRightInput,
+    bleedTopInput, bleedBottomInput, bleedLeftInput, bleedRightInput
+];
 
 const handleInputChange = () => {
     const mode = getRenderingMode();
@@ -1348,17 +1592,11 @@ const handleInputCommit = () => {
     }
 };
 
-const settingInputs = [
-    fontSizeInput, lineHeightInput, letterSpacingInput,
-    marginLeftInput, marginRightInput, translateXInput, translateYInput, rotateInput, skewXInput, skewYInput,
-    pageHeightInput, pageWidthInput,
-    pageMarginTopInput, pageMarginBottomInput, pageMarginLeftInput, pageMarginRightInput,
-    bleedTopInput, bleedBottomInput, bleedLeftInput, bleedRightInput
-];
 
 const allTextInputs = [
     editor,
-    ...Object.values(marginInputs),
+    ...Object.values(marginInputsLeft),
+    ...Object.values(marginInputsRight),
     ...settingInputs,
     languageInput
 ].filter(Boolean);
@@ -1464,21 +1702,37 @@ exportPdfButtons.forEach(button => {
     });
 });
 
+
+function resetEditorTabs() {
+    textEditorTextarea.classList.add('hidden');
+    marginEditorLeftTextarea.classList.add('hidden');
+    marginEditorRightTextarea.classList.add('hidden');
+    btnText.classList.remove('active');
+    btnMarginsLeft.classList.remove('active');
+    btnMarginsRight.classList.remove('active');
+}
+
 if (btnText) {
     btnText.addEventListener('click', () => {
+        resetEditorTabs();
         textEditorTextarea.classList.remove('hidden');
-        marginEditorTextarea.classList.add('hidden');
         btnText.classList.add('active');
-        btnMargins.classList.remove('active');
     });
 }
 
-if (btnMargins) {
-    btnMargins.addEventListener('click', () => {
-        marginEditorTextarea.classList.remove('hidden');
-        textEditorTextarea.classList.add('hidden');
-        btnMargins.classList.add('active');
-        btnText.classList.remove('active');
+if (btnMarginsLeft) {
+    btnMarginsLeft.addEventListener('click', () => {
+        resetEditorTabs();
+        marginEditorLeftTextarea.classList.remove('hidden');
+        btnMarginsLeft.classList.add('active');
+    });
+}
+
+if (btnMarginsRight) {
+    btnMarginsRight.addEventListener('click', () => {
+        resetEditorTabs();
+        marginEditorRightTextarea.classList.remove('hidden');
+        btnMarginsRight.classList.add('active');
     });
 }
 
@@ -1543,7 +1797,31 @@ cropMarksRadios.forEach(radio => {
 
 facingPagesRadios.forEach(radio => {
     radio.addEventListener('change', () => {
+        const isFacing = (getFacingPagesMode() === 'on');
+        
+        // Update Labels and Buttons
         updateFacingPagesLabels();
+        
+        if (isFacing) {
+            labelMarginsLeft.textContent = 'Margins left';
+            btnMarginsRight.classList.remove('hidden');
+        } else {
+            labelMarginsLeft.textContent = 'Margins';
+            btnMarginsRight.classList.add('hidden');
+            
+            // If they were on the Right margin tab, force them back to Left/Default
+            if (btnMarginsRight.classList.contains('active')) {
+                btnMarginsLeft.click(); 
+            }
+        }
+        
+        saveCurrentSubTabState();
+        triggerBookRender(0);
+    });
+});
+
+indexationRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
         saveCurrentSubTabState();
         triggerBookRender(0);
     });
