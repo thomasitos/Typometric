@@ -192,95 +192,114 @@ function initFormulaDropdowns() {
 }
 
 // Manuelle Zeichen-Zerlegung für echten Erhalt aller Leerzeichen
-function applyCustomCharSplitting(container) {
-    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+function applyCustomCharSplitting(element) {
+    // 1. Alle Text-Knoten im Element finden
     const textNodes = [];
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
     let node;
-
     while ((node = walker.nextNode())) {
-        // NEU: Ignoriere reine Whitespace/Umbruch-Knoten, die von marked.js für die HTML-Formatierung generiert werden
-        if (node.nodeValue.replace(/[\n\r\t]+/g, '').length === 0) {
-            continue;
-        }
-        if (node.nodeValue.length > 0) {
-            textNodes.push(node);
-        }
+        textNodes.push(node);
     }
+
+    // Globale Zähler für diesen Paragraphen / dieses Element
+    let charIndexGlobal = 0; 
+    let spaceCountInSequence = 0; // Falls du Leerzeichen-Ketten zählst
 
     textNodes.forEach(textNode => {
         const text = textNode.nodeValue;
         const parent = textNode.parentNode;
-        const frag = document.createDocumentFragment();
+
+        // Leere Zeilen und bereits verarbeitete Knoten überspringen
+        if (parent.closest('.empty-line') || parent.closest('.char')) {
+            return;
+        }
 
         let currentWord = null;
         let currentSyllable = null;
-        let spaceCountInSequence = 0; 
 
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
-            const code = char.charCodeAt(0);
 
-            // NEU: Überspringe Zeilenumbrüche und Tabs im Text, die keine echten Buchstaben sind
+            // Unsichtbare Formatierungs-Zeichen ignorieren
             if (char === '\n' || char === '\r' || char === '\t') {
                 continue;
             }
 
+            const charSpan = document.createElement('span');
+            charSpan.setAttribute('data-char', char);
+            charSpan.textContent = char;
+
+            // ==========================================
+            // FALL A: LEERZEICHEN
+            // ==========================================
             if (char === ' ' || char === '\u00A0') {
+                charSpan.className = 'char space';
+                
+                // Erbt den Index des vorherigen Buchstabens (Rhythmus bleibt erhalten!)
+                charSpan.style.setProperty('--char-index', charIndexGlobal);
+                
+                // Wort- und Silbenbindung aufheben
                 currentWord = null;
                 currentSyllable = null;
                 spaceCountInSequence++;
-
-                const spaceSpan = document.createElement('span');
-                spaceSpan.className = 'char space';
-                spaceSpan.setAttribute('data-char', ' ');
-
-                if (spaceCountInSequence === 1) {
-                    spaceSpan.textContent = ' ';
+                
+                parent.insertBefore(charSpan, textNode);
+            } 
+            // ==========================================
+            // FALL B: WEICHER TRENNSTRICH (Soft Hyphen / &shy;)
+            // ==========================================
+            else if (char === '\u00AD') { 
+                charSpan.className = 'char shy';
+                
+                // Erbt ebenfalls den Index, zählt aber nicht hoch
+                charSpan.style.setProperty('--char-index', charIndexGlobal);
+                
+                // Hängt sich unsichtbar an das aktuelle Wort / die Silbe an
+                if (currentSyllable) {
+                    currentSyllable.appendChild(charSpan);
+                } else if (currentWord) {
+                    currentWord.appendChild(charSpan);
                 } else {
-                    spaceSpan.textContent = '\u00A0';
+                    parent.insertBefore(charSpan, textNode);
                 }
-
-                frag.appendChild(spaceSpan);
             } 
-            else if (char === '\u00AD' || code === 173) {
-                spaceCountInSequence = 0;
-                currentSyllable = null;
-
-                const shySpan = document.createElement('span');
-                shySpan.className = 'char shy';
-                shySpan.innerHTML = '&shy;';
-
-                if (!currentWord) {
-                    currentWord = document.createElement('span');
-                    currentWord.className = 'word';
-                    frag.appendChild(currentWord);
-                }
-                currentWord.appendChild(shySpan);
-            } 
+            // ==========================================
+            // FALL C: ECHTE BUCHSTABEN
+            // ==========================================
             else {
-                spaceCountInSequence = 0;
+                charSpan.className = 'char';
+                
+                // ZÄHLER HOCHSETZEN! (Hier passiert der eigentliche Rhythmus)
+                charIndexGlobal++;
+                charSpan.style.setProperty('--char-index', charIndexGlobal);
+                spaceCountInSequence = 0; // Reset für Leerzeichen-Ketten
 
+                // 1. Wort-Container erstellen, falls wir in einem neuen Wort sind
                 if (!currentWord) {
                     currentWord = document.createElement('span');
                     currentWord.className = 'word';
-                    frag.appendChild(currentWord);
+                    parent.insertBefore(currentWord, textNode);
                 }
+
+                // 2. Silben-Container erstellen (Falls du sie mal kurz abschalten 
+                // willst, kommentiere diesen Block aus und ändere unten "currentSyllable" zu "currentWord")
                 if (!currentSyllable) {
                     currentSyllable = document.createElement('span');
                     currentSyllable.className = 'syllable';
                     currentWord.appendChild(currentSyllable);
                 }
 
-                const charSpan = document.createElement('span');
-                charSpan.className = 'char';
-                charSpan.setAttribute('data-char', char);
-                charSpan.textContent = char;
+                // 3. Buchstaben einfügen
                 currentSyllable.appendChild(charSpan);
             }
         }
-
-        parent.replaceChild(frag, textNode);
+        
+        // Den alten, unformatierten Text-String aus dem HTML entfernen
+        parent.removeChild(textNode);
     });
+
+    // Am Ende dem gesamten Paragraphen die korrekte Gesamtanzahl der ECHTEN Buchstaben übergeben
+    element.style.setProperty('--char-total', charIndexGlobal);
 }
 
 function getElementSplittingMode() {
@@ -868,31 +887,38 @@ function applyDynamicStyles() {
     }
 
     .pagedjs_area .word {
-        display: inline !important;
+        display: inline-block !important;
         white-space: normal !important;
+        line-height: inherit !important;
+        height: 0px !important;
     }
 
     .pagedjs_area .syllable {
         display: inline-block !important;
         white-space: nowrap !important;
         vertical-align: baseline !important;
+        line-height: inherit !important;
+        height: 0px !important;
     }
 
     .pagedjs_area .char {
-        display: inline-block !important;
+        display: inline !important;
         white-space: pre !important;
         vertical-align: baseline !important;
+        line-height: inherit !important;
     }
 
     .pagedjs_area .char.shy {
         display: inline !important;
         white-space: normal !important;
+        line-height: inherit !important;
     }
 
     /* Leerzeichen sind inline und normal formatiert für dynamischen Blocksatz */
     .pagedjs_area .char.space {
         display: inline !important;
         white-space: normal !important;
+        line-height: 0 !important;
     }
 
     .pagedjs_area .line {
@@ -901,12 +927,22 @@ function applyDynamicStyles() {
         white-space: normal !important;
     }
 
+
+
+/* 1. Die Magie für die Buchstaben: Box-Höhe für das Layout "unsichtbar" machen */
     .pagedjs_area .word,
     .pagedjs_area .syllable,
-    .pagedjs_area .char,
-    .pagedjs_area .line {
+    .pagedjs_area .char {
         text-indent: 0 !important;
+        line-height: 0 !important; 
+        
+        /* Zwingt den Browser, diese Elemente bei der Zeilenhöhe zu ignorieren, 
+           selbst wenn sie durch Formeln auf der Grundlinie stark verschoben werden */
+        margin-top: -1000px !important;
+        margin-bottom: -1000px !important;
     }
+
+
 
     `;
 
@@ -937,6 +973,28 @@ function applyDynamicStyles() {
         const effectiveFontSize = (style.fontSize === 'inherit') ? elementStyles.body.fontSize : style.fontSize;
         const effectiveLineHeight = (style.lineHeight === 'inherit') ? elementStyles.body.lineHeight : style.lineHeight;
         const effectiveLetterSpacing = (style.letterSpacing === 'inherit') ? elementStyles.body.letterSpacing : style.letterSpacing;
+
+
+        // ==========================================
+        // NEU: LEERE ZEILEN ANS RASTER KOPPELN
+        // ==========================================
+        if (key === 'body') {
+            // Lokaler Check: Macht aus "1.5" ein "1.5em", lässt "18px" aber als "18px"
+            // (wird nur hier für die "height"-Eigenschaft benötigt)
+            let lhVal = (effectiveLineHeight || '1.4').toString().trim();
+            let heightVal = /^\d+(\.\d+)?$/.test(lhVal) ? `${lhVal}em` : lhVal;
+
+            generatedCss += `
+            .pagedjs_area .empty-line {
+                display: block !important;
+                height: calc(${heightVal}) !important; /* height braucht zwingend eine Einheit! */
+                margin: 0 !important;
+                padding: 0 !important;
+                line-height: 0 !important; 
+                overflow: hidden !important; 
+            }
+            `;
+        }
 
         const tx = (style.translateX === 'inherit' ? elementStyles.body.translateX : style.translateX || '0px').trim();
         const ty = (style.translateY === 'inherit' ? elementStyles.body.translateY : style.translateY || '0px').trim();
@@ -1041,7 +1099,12 @@ function applyDynamicStyles() {
                 #book-canvas.facing-pages-mode .pagedjs_pages {
                     display: flex !important;
                     flex-wrap: wrap !important;
-                    justify-content: center !important;
+                    
+                    /* NEU: Flex-Start statt Center, und exakte Breite von 2 Seiten */
+                    width: calc(${pageWidthInput.value} * 2) !important;
+                    margin: 0 auto !important;
+                    justify-content: flex-start !important;
+                    
                     row-gap: 20px !important;
                 }
                 #book-canvas.facing-pages-mode .pagedjs_page {
@@ -1058,6 +1121,52 @@ function applyDynamicStyles() {
                 }
             `;
         }
+
+        generatedCss += `
+        @media print {
+            /* 0. WICHTIG: Verhindert doppelte Ränder auch in der Doppelseitenansicht! 
+                  Muss explizit für left/right/first genullt werden, 
+                  da diese eine höhere CSS-Spezifität haben. */
+            @page { margin: 0; }
+            @page:left { margin: 0; }
+            @page:right { margin: 0; }
+            @page:first { margin: 0; }
+
+            /* 1. Dokument-Hintergrund auf Weiß und Abstände nullen */
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+            }
+
+            /* 2. Ignoriert den Vorschau-Zoom, deaktiviert Flex-Zentrierung 
+                  und löscht das 20px Preview-Padding! */
+            #book-canvas {
+                display: block !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            #book-canvas, .pagedjs_pages {
+                transform: none !important;
+                zoom: 1 !important;
+                width: auto !important;
+                height: auto !important;
+            }
+            
+            /* 3. Schatten und Rahmen von den Einzelseiten entfernen */
+            .pagedjs_page {
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            pagedjs_sheet {
+
+            }
+        }
+        `;
 
         let styleTag = document.getElementById('dynamic-book-styles');
         if (!styleTag) {
@@ -1309,16 +1418,25 @@ function triggerBookRender(customDelay = null) {
 
             const marksRule = isCropMarksOn ? 'marks: crop;' : 'marks: none;';
 
+            const bleedRule = `bleed: ${bTop} ${bRightOrOutside} ${bBottom} ${bLeftOrInside};`;
+
             let pageStyleContent = '';
 
             if (isFacingPages) {
+                // NEU: Ein globaler Basis-Bleed für das Root-Element, 
+                // damit Paged.js nicht auf die 6mm zurückfällt!
+                const baseBleed = `bleed: ${bTop} ${bRightOrOutside} ${bBottom} ${bLeftOrInside};`;
+
                 pageStyleContent = `
                 @page { 
                     size: ${pageWidth} ${pageHeight}; 
+                    margin: 0 !important;
                     ${marksRule}
+                    ${baseBleed} /* <-- Das fehlte und hat die 6mm verursacht */
                 }
 
                 @page:left {
+                    /* Margin und Bleed (Inside/Outside) korrekt ausgerichtet */
                     margin: ${mTop} ${mRightOrOutside} ${mBottom} ${mLeftOrInside};
                     bleed: ${bTop} ${bLeftOrInside} ${bBottom} ${bRightOrOutside};
 
@@ -1331,6 +1449,7 @@ function triggerBookRender(customDelay = null) {
                 }
 
                 @page:right {
+                    /* Margin und Bleed (Inside/Outside) korrekt ausgerichtet */
                     margin: ${mTop} ${mLeftOrInside} ${mBottom} ${mRightOrOutside};
                     bleed: ${bTop} ${bRightOrOutside} ${bBottom} ${bLeftOrInside};
 
@@ -1342,8 +1461,9 @@ function triggerBookRender(customDelay = null) {
                     @bottom-right { ${getMarginBoxStyles(marginInputsRight.bottomRight, 'bottom')} }
                 }
                 `;
+            
             } else {
-                                const bleedRule = `bleed: ${bTop} ${bRightOrOutside} ${bBottom} ${bLeftOrInside};`;
+                                
 
                 pageStyleContent = `
                 @page { 
@@ -1391,7 +1511,28 @@ function triggerBookRender(customDelay = null) {
             const lineSplitting = getLineSplittingMode();
             const sections = userText.split('---');
             
-            for (const sectionText of sections) {
+for (let i = 0; i < sections.length; i++) {
+                const sectionText = sections[i];
+
+                // NEU: Physisches, unsichtbares Trennelement erzwingt den Umbruch 
+                // vollkommen unabhängig von den extremen Margins der Text-Sektionen.
+                if (i > 0) {
+                    const pageBreaker = document.createElement('div');
+                    pageBreaker.style.breakBefore = 'page';
+                    pageBreaker.style.pageBreakBefore = 'always';
+                    pageBreaker.innerHTML = '&nbsp;'; 
+                    pageBreaker.style.display = 'block';
+                    pageBreaker.style.fontSize = '1px';
+                    pageBreaker.style.lineHeight = '1px';
+                    pageBreaker.style.height = '1px';
+                    pageBreaker.style.visibility = 'hidden';
+                    pageBreaker.style.margin = '0';
+                    pageBreaker.style.padding = '0';
+                    
+                    // Direkt in den Ghost-Container einhängen, BEVOR die neue Section kommt
+                    ghost.appendChild(pageBreaker);
+                }
+
                 const sectionDiv = document.createElement('div');
                 sectionDiv.className = 'book-section';
 
@@ -1403,7 +1544,7 @@ function triggerBookRender(customDelay = null) {
                     // Echte leere Zeilen als sicheren HTML-Block zurückgeben.
                     // Marked.js verpackt <div> Tags NICHT in <p> Tags!
                     if (l.trim() === '') {
-                        return '<div class="empty-line" style="margin: 0; min-height: 1.2em;">&nbsp;</div>';
+                        return '<div class="empty-line">&nbsp;</div>';
                     }
                     return l;
                 });
@@ -1413,7 +1554,6 @@ function triggerBookRender(customDelay = null) {
                 sectionDiv.innerHTML = marked.parse(processedLines.join('\n\n'));
 
                 const isHyphenationOn = (getHyphenationValue() === 'on');
-                
                 
                 // --- AB HIER MUSS DEIN BEREITS BESTEHENDER CODE BLEIBEN ---
                 if (elemSplitting === 'characters') {
@@ -1443,7 +1583,8 @@ function triggerBookRender(customDelay = null) {
             const indexationScope = document.querySelector('input[name="indexation-scope"]:checked')?.value || 'continuous';
 
             if (indexationScope === 'continuous') {
-                const allCharsGhost = ghost.querySelectorAll('.char:not(.shy)');
+                // NEU: :not(.space) hinzugefügt, damit Leerzeichen beim Zählen ignoriert werden
+                const allCharsGhost = ghost.querySelectorAll('.char:not(.shy):not(.space)');
                 const charTotal = allCharsGhost.length;
                 allCharsGhost.forEach((char, index) => {
                     char.style.setProperty('--char-index', index);
@@ -1460,7 +1601,8 @@ function triggerBookRender(customDelay = null) {
                 // Index resets for every individual paragraph
                 const paragraphs = ghost.querySelectorAll('p:not(.empty-line), h1, h2, h3');
                 paragraphs.forEach(p => {
-                    const pChars = p.querySelectorAll('.char:not(.shy)');
+                    // NEU: Auch hier :not(.space) hinzugefügt
+                    const pChars = p.querySelectorAll('.char:not(.shy):not(.space)');
                     pChars.forEach((char, index) => {
                         char.style.setProperty('--char-index', index);
                         char.style.setProperty('--char-total', pChars.length);
@@ -1474,19 +1616,20 @@ function triggerBookRender(customDelay = null) {
                 });
             }
 
-            const allShysGhost = ghost.querySelectorAll('.char.shy');
-            allShysGhost.forEach(shy => {
-                // Da die Buchstaben in <span class="syllable"> verpackt sind, müssen wir 
-                // gezielt den Baum rückwärts durchsuchen, um den echten Buchstaben zu finden.
-                let node = shy.previousSibling;
+            // NEU: Kombinierte Logik, die sich sowohl um .shy als auch um .space kümmert
+            const inheritingChars = ghost.querySelectorAll('.char.shy, .char.space');
+            inheritingChars.forEach(inheritingChar => {
+                // Rückwärts durchsuchen, um den echten Buchstaben zu finden
+                let node = inheritingChar.previousSibling;
                 let prevChar = null;
                 while(node) {
                     if (node.nodeType === 1) { // Ist ein HTML-Element
-                        if (node.classList.contains('char') && !node.classList.contains('shy')) {
+                        // Darf weder .shy noch .space sein
+                        if (node.classList.contains('char') && !node.classList.contains('shy') && !node.classList.contains('space')) {
                             prevChar = node; 
                             break;
                         }
-                        const chars = node.querySelectorAll('.char:not(.shy)');
+                        const chars = node.querySelectorAll('.char:not(.shy):not(.space)');
                         if (chars && chars.length > 0) {
                             prevChar = chars[chars.length - 1]; 
                             break;
@@ -1497,8 +1640,8 @@ function triggerBookRender(customDelay = null) {
                 
                 // Wenn gefunden: Kopiere die mathematischen CSS-Variablen!
                 if (prevChar) {
-                    shy.style.setProperty('--char-index', prevChar.style.getPropertyValue('--char-index'));
-                    shy.style.setProperty('--char-total', prevChar.style.getPropertyValue('--char-total'));
+                    inheritingChar.style.setProperty('--char-index', prevChar.style.getPropertyValue('--char-index'));
+                    inheritingChar.style.setProperty('--char-total', prevChar.style.getPropertyValue('--char-total'));
                 }
             });
 
@@ -1659,6 +1802,58 @@ fontSelect.addEventListener('change', () => {
         updateFontStyleDropdown(fontSelect.value);
         saveCurrentSubTabState();
         triggerBookRender(0);
+    }
+});
+
+fontUploadInput.addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+        // Falls der Nutzer auf "Abbrechen" klickt, zur alten Schrift zurückspringen
+        fontSelect.value = previousFontKey;
+        return;
+    }
+
+    try {
+        // 1. Temporäre, lokale URL für die Datei erstellen
+        const fontUrl = URL.createObjectURL(file);
+        const fontName = file.name.replace(/\.[^/.]+$/, ""); // Dateiname ohne Endung (.ttf etc.)
+        const fontKey = "upload_" + Date.now(); // Eindeutige ID generieren
+
+        // 2. Schrift in den Browser laden (damit Paged.js sie nutzen kann)
+        const customFont = new FontFace(fontName, `url(${fontUrl})`);
+        await customFont.load();
+        document.fonts.add(customFont);
+
+        // 3. Nach Variable-Font-Achsen scannen (nutzt deine bestehende Funktion!)
+        const detectedAxes = await scanSingleFontFile(fontUrl, fontName);
+
+        // 4. In deine globale Config eintragen
+        fontConfig[fontKey] = {
+            name: fontName + " (Upload)",
+            cssValue: `"${fontName}", sans-serif`,
+            styles: ALL_4_STYLES, // Erlaubt "Faux Bold/Italic" durch den Browser, falls die Font es nicht nativ hat
+            url: fontUrl,
+            axes: detectedAxes
+        };
+
+        // 5. Dropdown aktualisieren und die neue Schrift direkt auswählen
+        initFontDropdown();
+        fontSelect.value = fontKey;
+        
+        // 6. UI updaten und Buch neu rendern
+        previousFontKey = fontKey;
+        updateAxisInputs();
+        updateFontStyleDropdown(fontKey);
+        saveCurrentSubTabState();
+        triggerBookRender(0);
+
+    } catch (error) {
+        console.error("Fehler beim Laden der Schrift:", error);
+        alert("Die Schriftart konnte leider nicht geladen werden. Ist es eine gültige Font-Datei?");
+        fontSelect.value = previousFontKey; // Zurücksetzen
+    } finally {
+        // Input-Wert zurücksetzen, damit man bei Bedarf nochmal dieselbe Datei hochladen kann
+        event.target.value = '';
     }
 });
 
