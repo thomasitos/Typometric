@@ -246,23 +246,22 @@ function applyCustomCharSplitting(element) {
                 parent.insertBefore(charSpan, textNode);
             } 
             // ==========================================
-            // FALL B: WEICHER TRENNSTRICH (Soft Hyphen / &shy;)
-            // ==========================================
-            else if (char === '\u00AD') { 
-                charSpan.className = 'char shy';
-                
-                // Erbt ebenfalls den Index, zählt aber nicht hoch
-                charSpan.style.setProperty('--char-index', charIndexGlobal);
-                
-                // Hängt sich unsichtbar an das aktuelle Wort / die Silbe an
-                if (currentSyllable) {
-                    currentSyllable.appendChild(charSpan);
-                } else if (currentWord) {
-                    currentWord.appendChild(charSpan);
-                } else {
-                    parent.insertBefore(charSpan, textNode);
-                }
-            } 
+// FALL B: WEICHER TRENNSTRICH (Soft Hyphen / &shy;)
+// ==========================================
+else if (char === '\u00AD') { 
+    charSpan.className = 'char shy';
+    charSpan.style.setProperty('--char-index', charIndexGlobal);
+    
+    // WebKit-Bugfix: Ein Zero-Width Space vor das Soft-Hyphen setzen!
+    charSpan.textContent = '\u2060\u00AD'; 
+    
+    if (currentWord) {
+        currentWord.appendChild(charSpan); // Das isolierte Gelenk wird ans Wort gehängt
+        currentSyllable = null;            // Silbe schließen, damit das Gelenk funktioniert!
+    } else {
+        parent.insertBefore(charSpan, textNode);
+    }
+}
             // ==========================================
             // FALL C: ECHTE BUCHSTABEN
             // ==========================================
@@ -691,6 +690,7 @@ const fontConfig = {
     "sciencegothic": { name: "Science Gothic", cssValue: 'ScienceGothic, sans-serif', styles: REGULAR_ONLY, url: "assets/fonts/ScienceGothic-VariableFont_CTRS,slnt,wdth,wght.ttf" },
     "sono": { name: "Sono", cssValue: 'Sono, sans-serif', styles: REGULAR_ONLY, url: "assets/fonts/Sono[MONO,wght].ttf" },
     "sprat": { name: "Sprat", cssValue: 'Sprat, sans-serif', styles: REGULAR_ONLY, url: "assets/fonts/SpratVF.ttf" },
+    "shapeshifter": { name: "ShapeShifter", cssValue: 'ShapeShifter, sans-serif', styles: REGULAR_ONLY, url: "assets/fonts/ShapeShifter_2Termin_1Übung_2VF.ttf" },
     "tilt": {
         name: "Tilt",
         cssValue: "'Tilt Neon', sans-serif",
@@ -700,7 +700,6 @@ const fontConfig = {
             { label: 'Warp', weight: '400', style: 'normal', cssValue: "'Tilt Warp', sans-serif", url: "assets/fonts/TiltWarp[HROT,VROT].ttf" }
         ]
     },
-    "tiny": { name: "Tiny", cssValue: 'tiny, sans-serif', styles: REGULAR_ONLY }
 };
 
 async function autoDetectLocalAxes() {
@@ -887,7 +886,7 @@ function applyDynamicStyles() {
     }
 
     .pagedjs_area .word {
-        display: inline-block !important;
+        display: inline! important;
         white-space: normal !important;
         line-height: inherit !important;
         height: 0px !important;
@@ -938,8 +937,8 @@ function applyDynamicStyles() {
         
         /* Zwingt den Browser, diese Elemente bei der Zeilenhöhe zu ignorieren, 
            selbst wenn sie durch Formeln auf der Grundlinie stark verschoben werden */
-        margin-top: -1000px !important;
-        margin-bottom: -1000px !important;
+        margin-top: 0px !important;
+        margin-bottom: 0px !important;
     }
 
 
@@ -1486,9 +1485,21 @@ function triggerBookRender(customDelay = null) {
             .book-section {
                 display: block !important;
             }
-            .book-section + .book-section {
-                break-before: page !important;
-                page-break-before: always !important;
+            
+            /* Der physische Breaker bleibt auf der ALTEN Seite 
+               und erzwingt DANACH den Umbruch. Dadurch startet 
+               die neue Seite sauber ohne Abstand! */
+            .manual-page-break {
+                display: block !important;
+                break-after: page !important;
+                page-break-after: always !important;
+                
+                height: 1px !important;
+                line-height: 1px !important;
+                font-size: 1px !important;
+                color: transparent !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
             `;
             
@@ -1509,45 +1520,40 @@ function triggerBookRender(customDelay = null) {
 
             const elemSplitting = getElementSplittingMode();
             const lineSplitting = getLineSplittingMode();
-            const sections = userText.split('---');
-            
+
+            // ==========================================
+            // DEIN QUICK & DIRTY HACK: 
+            // Macht aus 3 oder mehr Strichen immer exakt 6 Striche (------).
+            // Dadurch entsteht beim Split automatisch die leere "Geister-Sektion", 
+            // die Paged.js zwingt, den Seitenumbruch zu akzeptieren!
+            // ==========================================
+            const hackedText = userText.replace(/-{3,}/g, '------');
+            const sections = hackedText.split(/\r?\n?---\r?\n?/);
+
 for (let i = 0; i < sections.length; i++) {
-                const sectionText = sections[i];
+    const sectionText = sections[i];
 
-                // NEU: Physisches, unsichtbares Trennelement erzwingt den Umbruch 
-                // vollkommen unabhängig von den extremen Margins der Text-Sektionen.
-                if (i > 0) {
-                    const pageBreaker = document.createElement('div');
-                    pageBreaker.style.breakBefore = 'page';
-                    pageBreaker.style.pageBreakBefore = 'always';
-                    pageBreaker.innerHTML = '&nbsp;'; 
-                    pageBreaker.style.display = 'block';
-                    pageBreaker.style.fontSize = '1px';
-                    pageBreaker.style.lineHeight = '1px';
-                    pageBreaker.style.height = '1px';
-                    pageBreaker.style.visibility = 'hidden';
-                    pageBreaker.style.margin = '0';
-                    pageBreaker.style.padding = '0';
-                    
-                    // Direkt in den Ghost-Container einhängen, BEVOR die neue Section kommt
-                    ghost.appendChild(pageBreaker);
-                }
+    // 2. Das physische Trennelement einfügen
+    if (i > 0) {
+        const pageBreaker = document.createElement('div');
+        pageBreaker.className = 'manual-page-break';
+        pageBreaker.innerHTML = '&nbsp;'; // Paged.js braucht echten Inhalt!
+        ghost.appendChild(pageBreaker);
+    }
 
-                const sectionDiv = document.createElement('div');
-                sectionDiv.className = 'book-section';
+    const sectionDiv = document.createElement('div');
+    sectionDiv.className = 'book-section';
 
-                // 1. Text VOR dem Markdown-Parsing präparieren
-                const lines = sectionText.split(/\r?\n/);
-                const processedLines = lines.map(line => {
-                    let l = line.replace(/ {2,}/g, match => ' ' + '&nbsp;'.repeat(match.length - 1));
-                    
-                    // Echte leere Zeilen als sicheren HTML-Block zurückgeben.
-                    // Marked.js verpackt <div> Tags NICHT in <p> Tags!
-                    if (l.trim() === '') {
-                        return '<div class="empty-line">&nbsp;</div>';
-                    }
-                    return l;
-                });
+    // 3. Text VOR dem Markdown-Parsing präparieren
+    const lines = sectionText.split(/\r?\n/);
+    const processedLines = lines.map(line => {
+        let l = line.replace(/ {2,}/g, match => ' ' + '&nbsp;'.repeat(match.length - 1));
+        
+        if (l.trim() === '') {
+            return '<div class="empty-line">&nbsp;</div>';
+        }
+        return l;
+    });
 
                 // 2. Mit \n\n verbinden erzwingt "1 Enter = 1 echtes <p>" bei marked.js.
                 // Deine leeren Zeilen fließen als reines HTML einfach sicher mit hindurch.
@@ -1999,6 +2005,13 @@ if (demoBtn) {
         fontSizeInput.value = preset.fontSize;
         lineHeightInput.value = preset.lineHeight;
         letterSpacingInput.value = preset.letterSpacing;
+
+        translateXInput.value = preset.translatex;
+        translateYInput.value = preset.translatey;
+        skewXInput.value = preset.skewx;
+        skewYInput.value = preset.skewy;
+        rotateInput.value = preset.rotate;
+        
         
         const alignRadio = document.querySelector(`input[name="alignment"][value="${preset.alignment}"]`);
         if (alignRadio) {
@@ -2060,11 +2073,7 @@ indexationRadios.forEach(radio => {
 // 9. START-ABLAUF
 // ==========================================
 async function startApp() {
-    const defaultText = `Typometric breaks typography free from its static chains by incorporating mathematics directly into the design process. Unlike traditional layout software, where values are fixed, every parameter can be controlled using mathematical formulas. Designers are no longer bound to rigid weights or font sizes. Rather, they can use presets or custom equations to style each word, letter, or line individually. This opens up completely new possibilities for creative typographic expression.
-
-Typometric breaks typography free from its static chains by incorporating mathematics directly into the design process. Unlike traditional layout software, where values are fixed, every parameter can be controlled using mathematical formulas. Designers are no longer bound to rigid weights or font sizes. Rather, they can use presets or custom equations to style each word, letter, or line individually. This opens up completely new possibilities for creative typographic expression.
-
-Typometric breaks typography free from its static chains by incorporating mathematics directly into the design process. Unlike traditional layout software, where values are fixed, every parameter can be controlled using mathematical formulas. Designers are no longer bound to rigid weights or font sizes. Rather, they can use presets or custom equations to style each word, letter, or line individually. This opens up completely new possibilities for creative typographic expression.`;
+    const defaultText = `Typometric breaks typography free from its static chains by incorporating mathematics directly into the design process. Unlike traditional layout software, where values are fixed, every parameter can be controlled using mathematical formulas. Designers are no longer bound to rigid weights or font sizes. Rather, they can use presets or custom equations to style each word, letter, or line individually. This opens up completely new possibilities for creative typographic expression.`;
 
     if (editor && !editor.value) {
         editor.value = defaultText;
