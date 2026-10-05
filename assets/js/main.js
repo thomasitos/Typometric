@@ -248,12 +248,10 @@ function applyCustomCharSplitting(element) {
             // ==========================================
 // FALL B: WEICHER TRENNSTRICH (Soft Hyphen / &shy;)
 // ==========================================
-else if (char === '\u00AD') { 
+else if (char === '\u00AD') {
     charSpan.className = 'char shy';
     charSpan.style.setProperty('--char-index', charIndexGlobal);
-    
-    // WebKit-Bugfix: Ein Zero-Width Space vor das Soft-Hyphen setzen!
-    charSpan.textContent = '\u2060\u00AD'; 
+    charSpan.textContent = '\u00AD'; 
     
     if (currentWord) {
         currentWord.appendChild(charSpan); // Das isolierte Gelenk wird ans Wort gehängt
@@ -889,15 +887,13 @@ function applyDynamicStyles() {
         display: inline! important;
         white-space: normal !important;
         line-height: inherit !important;
-        height: 0px !important;
     }
 
     .pagedjs_area .syllable {
-        display: inline-block !important;
+        display: inline !important;
         white-space: nowrap !important;
         vertical-align: baseline !important;
         line-height: inherit !important;
-        height: 0px !important;
     }
 
     .pagedjs_area .char {
@@ -910,7 +906,6 @@ function applyDynamicStyles() {
     .pagedjs_area .char.shy {
         display: inline !important;
         white-space: normal !important;
-        line-height: inherit !important;
     }
 
     /* Leerzeichen sind inline und normal formatiert für dynamischen Blocksatz */
@@ -933,12 +928,10 @@ function applyDynamicStyles() {
     .pagedjs_area .syllable,
     .pagedjs_area .char {
         text-indent: 0 !important;
-        line-height: 0 !important; 
+        line-height: 0 !important;
         
         /* Zwingt den Browser, diese Elemente bei der Zeilenhöhe zu ignorieren, 
            selbst wenn sie durch Formeln auf der Grundlinie stark verschoben werden */
-        margin-top: 0px !important;
-        margin-bottom: 0px !important;
     }
 
 
