@@ -688,7 +688,7 @@ const fontConfig = {
     "sciencegothic": { name: "Science Gothic", cssValue: 'ScienceGothic, sans-serif', styles: REGULAR_ONLY, url: "assets/fonts/ScienceGothic-VariableFont_CTRS,slnt,wdth,wght.ttf" },
     "sono": { name: "Sono", cssValue: 'Sono, sans-serif', styles: REGULAR_ONLY, url: "assets/fonts/Sono[MONO,wght].ttf" },
     "sprat": { name: "Sprat", cssValue: 'Sprat, sans-serif', styles: REGULAR_ONLY, url: "assets/fonts/SpratVF.ttf" },
-    "shapeshifter": { name: "ShapeShifter", cssValue: 'ShapeShifter, sans-serif', styles: REGULAR_ONLY, url: "assets/fonts/ShapeShifter_2Termin_1Übung_2VF.ttf" },
+    "shapeshifter": { name: "ShapeShifter", cssValue: 'ShapeShifter, sans-serif', styles: REGULAR_ONLY, url: "assets/fonts/ShapeShifter_2Termin_1uebung_2VF.ttf" },
     "tilt": {
         name: "Tilt",
         cssValue: "'Tilt Neon', sans-serif",
